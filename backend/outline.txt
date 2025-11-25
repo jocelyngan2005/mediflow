@@ -1,0 +1,28 @@
+backend/
+├── app/
+│   ├── __init__.py
+│   ├── main.py                 # Entry point (FastAPI app initialization)
+│   ├── api/                    # Route handlers (Controllers)
+│   │   ├── __init__.py
+│   │   ├── dependencies.py     # Auth logic (Patient vs Staff)
+│   │   └── v1/
+│   │       ├── __init__.py
+│   │       ├── patients.py     # FAQ, SOP Search, Triage (Public/Patient)
+│   │       └── staff.py        # Medication Lookup, Admin (Protected)
+│   ├── core/                   # Configuration
+│   │   ├── __init__.py
+│   │   ├── config.py           # Env vars (JamAI Token, Project ID)
+│   │   └── security.py         # Simple token logic
+│   ├── models/                 # Pydantic Schemas (Request/Response objects)
+│   │   ├── __init__.py
+│   │   ├── chat.py             # Schemas for Chat/FAQ
+│   │   └── triage.py           # Schemas for Appointments
+│   └── services/               # External API Logic
+│       ├── __init__.py
+│       └── jamai_service.py    # The Wrapper for JamAI SDK
+├── scripts/                    # Utilities for setup
+│   ├── upload_knowledge.py     # Script to upload PDFs/CSVs to JamAI
+│   └── test_action.py          # Script to test Action Tables manually
+├── requirements.txt            # Dependencies (fastapi, uvicorn, jamaibase)
+├── .env                        # JAMAI_API_KEY, PROJECT_ID, TABLE_IDS
+└── Dockerfile                  # For deployment
