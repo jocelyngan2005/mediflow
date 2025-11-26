@@ -40,13 +40,6 @@ app.include_router(
     tags=["Clinic Staff"]
 )
 
-# 3. Clinic Management Routes
-app.include_router(
-    clinics.router,
-    prefix="/api/v1/clinics", 
-    tags=["Clinic Management"]
-)
-
 # 3. Clinic Management Routes (Public clinic list, Protected admin functions)
 app.include_router(
     clinics.router, 

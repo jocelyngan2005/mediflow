@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mediflow/theme/app_theme.dart';
 import 'package:mediflow/screens/clinic_selection_screen.dart';
+import 'package:mediflow/services/api_service.dart';
 
 class AIAssistantScreen extends StatefulWidget {
   final Clinic clinic;
@@ -78,7 +79,7 @@ class _AIAssistantScreenState extends State<AIAssistantScreen> with TickerProvid
     super.dispose();
   }
 
-  void _sendMessage(String text) {
+  void _sendMessage(String text) async {
     if (text.trim().isEmpty) return;
 
     setState(() {
@@ -94,84 +95,52 @@ class _AIAssistantScreenState extends State<AIAssistantScreen> with TickerProvid
     _messageController.clear();
     _scrollToBottom();
 
-    // Simulate AI response based on current tab/mode
-    Future.delayed(const Duration(seconds: 2), () {
+    try {
+      // Call the unified backend chat API
+      ApiResponse<ChatResponse> response = await ApiService.sendChatMessage(
+        clinicId: widget.clinic.clinicId,
+        message: text,
+        language: _currentLanguage,
+      );
+
+      setState(() {
+        if (response.success && response.data != null) {
+          _messages.add(ChatMessage(
+            text: response.data!.reply,
+            isUser: false,
+            timestamp: DateTime.now(),
+            sourceDocument: response.data!.sourceDocument,
+          ));
+        } else {
+          // Show error message
+          _messages.add(ChatMessage(
+            text: _getErrorMessage(response.error ?? 'Unknown error'),
+            isUser: false,
+            timestamp: DateTime.now(),
+            isSystem: true,
+          ));
+        }
+        _isTyping = false;
+      });
+    } catch (e) {
       setState(() {
         _messages.add(ChatMessage(
-          text: _generateResponse(text),
+          text: _getErrorMessage('Network error: $e'),
           isUser: false,
           timestamp: DateTime.now(),
-          sourceDocument: _detectDocumentSource(text),
+          isSystem: true,
         ));
         _isTyping = false;
       });
-      _scrollToBottom();
-    });
-  }
-
-  String? _detectDocumentSource(String query) {
-    // Detect if response should include document source
-    final lowerQuery = query.toLowerCase();
-    if (lowerQuery.contains('vaksin') || lowerQuery.contains('vaccine') || 
-        lowerQuery.contains('imunisasi') || lowerQuery.contains('immunisation')) {
-      return 'Immunisation Schedule (BM) - Page 3';
-    } else if (lowerQuery.contains('dengue') || lowerQuery.contains('demam denggi')) {
-      return 'Dengue Prevention Protocol - Page 5';
-    } else if (lowerQuery.contains('covid') || lowerQuery.contains('corona')) {
-      return 'COVID-19 Testing Protocol - Page 2';
-    } else if (lowerQuery.contains('influenza') || lowerQuery.contains('flu')) {
-      return 'Influenza Treatment Guidelines - Page 8';
     }
-    return null;
-  }
-
-  String _generateResponse(String query) {
-    final lowerQuery = query.toLowerCase();
     
-    // FAQ Responses
-    if (lowerQuery.contains('waktu') || lowerQuery.contains('hours') || lowerQuery.contains('operasi')) {
-      return _currentLanguage == 'BM'
-          ? '${widget.clinic.name} beroperasi pada waktu berikut:\n\n${widget.clinic.hours}\n\nAdakah anda ingin membuat temujanji?'
-          : '${widget.clinic.name} operates at the following hours:\n\n${widget.clinic.hours}\n\nWould you like to book an appointment?';
-    } 
-    else if (lowerQuery.contains('rawatan') || lowerQuery.contains('treatment')) {
-      return _currentLanguage == 'BM'
-          ? 'Kami menyediakan rawatan berikut:\n\n• Pemeriksaan kesihatan am\n• Rawatan demam & batuk\n• Vaksinasi kanak-kanak & dewasa\n• Ujian COVID-19\n• Rawatan kecemasan ringan\n\nRawatan mana yang anda perlukan?'
-          : 'We provide the following treatments:\n\n• General health check-ups\n• Fever & cough treatment\n• Child & adult vaccinations\n• COVID-19 testing\n• Minor emergency care\n\nWhich treatment do you need?';
-    }
-    else if (lowerQuery.contains('harga') || lowerQuery.contains('price')) {
-      return _currentLanguage == 'BM'
-          ? 'Berikut adalah anggaran harga untuk perkhidmatan kami:\n\n• Konsultasi am: RM30-50\n• Rawatan demam: RM50-80\n• Vaksinasi: RM80-200\n• Ujian COVID-19: RM150\n• Pemeriksaan kesihatan: RM100-300\n\nHarga sebenar bergantung kepada rawatan yang diperlukan.'
-          : 'Here are the estimated prices for our services:\n\n• General consultation: RM30-50\n• Fever treatment: RM50-80\n• Vaccination: RM80-200\n• COVID-19 test: RM150\n• Health check-up: RM100-300\n\nActual prices depend on the required treatment.';
-    }
-    // Document/SOP Responses
-    else if (lowerQuery.contains('vaksin') || lowerQuery.contains('vaccine') || 
-             lowerQuery.contains('imunisasi') || lowerQuery.contains('immunisation')) {
-      return _currentLanguage == 'BM'
-          ? '📄 **Berdasarkan Jadual Imunisasi KKM:**\n\nKanak-kanak patut menerima vaksin berikut:\n\n• BCG - Semasa lahir\n• Hepatitis B - 0, 1, dan 6 bulan\n• DTaP - 2, 3, dan 5 bulan\n• MMR - 12 bulan\n• Dos penggalang mengikut jadual\n\nDewasa:\n• Vaksin Influenza - Tahunan\n• COVID-19 - Mengikut keperluan\n• Tetanus - Setiap 10 tahun\n\nSila buat temujanji untuk vaksinasi.'
-          : '📄 **Based on KKM Immunisation Schedule:**\n\nChildren should receive:\n\n• BCG - At birth\n• Hepatitis B - 0, 1, and 6 months\n• DTaP - 2, 3, and 5 months\n• MMR - 12 months\n• Booster doses as scheduled\n\nAdults:\n• Influenza vaccine - Annually\n• COVID-19 - As needed\n• Tetanus - Every 10 years\n\nPlease book an appointment for vaccination.';
-    }
-    else if (lowerQuery.contains('dengue') || lowerQuery.contains('demam denggi')) {
-      return _currentLanguage == 'BM'
-          ? '📄 **Berdasarkan Protokol Pencegahan Denggi KKM:**\n\nLangkah pencegahan:\n\n• Hapuskan air bertakung\n• Guna racun serangga\n• Pakai pelindung anti-nyamuk\n• Pastikan sistem saliran baik\n• Program kesedaran komuniti\n\nSimptom:\n• Demam tinggi\n• Sakit kepala teruk\n• Sakit di belakang mata\n• Sakit sendi dan otot\n• Ruam kulit\n\nJika simptom bertambah teruk, dapatkan rawatan segera!'
-          : '📄 **Based on KKM Dengue Prevention Protocol:**\n\nPrevention measures:\n\n• Eliminate stagnant water\n• Use insect repellent\n• Wear protective clothing\n• Ensure proper drainage\n• Community awareness programs\n\nSymptoms:\n• High fever\n• Severe headache\n• Pain behind the eyes\n• Joint and muscle pain\n• Skin rash\n\nIf symptoms worsen, seek immediate medical attention!';
-    }
-    else if (lowerQuery.contains('covid') || lowerQuery.contains('corona')) {
-      return _currentLanguage == 'BM'
-          ? '📄 **Berdasarkan Protokol Ujian COVID-19 KKM:**\n\nUjian perlu dijalankan untuk:\n\n• Individu bergejala\n• Kontak rapat kes disahkan\n• Keperluan pra-perjalanan\n• Saringan tempat kerja\n\nJenis ujian:\n• RT-PCR (lebih tepat)\n• RTK-Ag (lebih cepat)\n\nPanduan pengasingan:\n• Minimum 5 hari untuk kes positif\n• Pantau simptom setiap hari\n• Dapatkan rawatan jika sesak nafas atau demam berterusan'
-          : '📄 **Based on KKM COVID-19 Testing Protocol:**\n\nTesting should be conducted for:\n\n• Symptomatic individuals\n• Close contacts of confirmed cases\n• Pre-travel requirements\n• Workplace screening\n\nTest types:\n• RT-PCR (more accurate)\n• RTK-Ag (faster results)\n\nIsolation guidelines:\n• Minimum 5 days for positive cases\n• Monitor symptoms daily\n• Seek medical attention if experiencing breathing difficulties or persistent fever';
-    }
-    else if (lowerQuery.contains('influenza') || lowerQuery.contains('flu') || lowerQuery.contains('selesema')) {
-      return _currentLanguage == 'BM'
-          ? '📄 **Berdasarkan SOP Rawatan Influenza:**\n\nSimptom biasa:\n• Demam tinggi mendadak\n• Batuk kering\n• Sakit tekak\n• Sakit badan\n• Keletihan\n\nRawatan:\n• Rehat mencukupi\n• Minum banyak air\n• Ubat penurun demam\n• Antiviral (jika perlu)\n\nPencegahan:\n• Vaksin influenza tahunan\n• Kebersihan tangan\n• Elak kontak dengan pesakit'
-          : '📄 **Based on Influenza Treatment SOP:**\n\nCommon symptoms:\n• Sudden high fever\n• Dry cough\n• Sore throat\n• Body aches\n• Fatigue\n\nTreatment:\n• Adequate rest\n• Plenty of fluids\n• Fever reducers\n• Antivirals (if necessary)\n\nPrevention:\n• Annual flu vaccine\n• Hand hygiene\n• Avoid contact with patients';
-    }
-    // Generic response
-    else {
-      return _currentLanguage == 'BM'
-          ? 'Terima kasih atas soalan anda tentang "${query}".\n\nSaya boleh membantu dengan:\n\n📋 **Maklumat Klinik:**\n• Waktu operasi\n• Rawatan & perkhidmatan\n• Harga & bayaran\n• Temujanji\n\n📄 **Dokumen & Panduan:**\n• Jadual imunisasi\n• SOP klinik\n• Pekeliling KKM\n• Protokol rawatan\n\nSila pilih topik di atas atau tanya soalan yang lebih spesifik.'
-          : 'Thank you for your question about "${query}".\n\nI can help with:\n\n📋 **Clinic Information:**\n• Operating hours\n• Treatments & services\n• Pricing & fees\n• Appointments\n\n📄 **Documents & Guidelines:**\n• Immunisation schedules\n• Clinic SOPs\n• KKM circulars\n• Treatment protocols\n\nPlease choose a topic above or ask a more specific question.';
-    }
+    _scrollToBottom();
+  }
+
+  String _getErrorMessage(String error) {
+    return _currentLanguage == 'BM'
+        ? 'Maaf, sistem menghadapi masalah: $error\n\nSila cuba lagi atau hubungi klinik terus.'
+        : 'Sorry, the system encountered an issue: $error\n\nPlease try again or contact the clinic directly.';
   }
 
   void _scrollToBottom() {

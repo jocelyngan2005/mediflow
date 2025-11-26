@@ -105,15 +105,15 @@ class ApiService {
     }
   }
 
-  /// Send FAQ chat message using clinic-specific SOPs
-  static Future<ApiResponse<ChatResponse>> sendFaqMessage({
+  /// Unified chat method for both FAQ and SOP questions
+  static Future<ApiResponse<ChatResponse>> sendChatMessage({
     required String clinicId,
     required String message,
     required String language,
   }) async {
     try {
       final response = await http.post(
-        Uri.parse('$baseUrl/patients/chat/sop'),
+        Uri.parse('$baseUrl/patients/chat'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'clinic_id': clinicId,
@@ -128,41 +128,39 @@ class ApiService {
         return ApiResponse.success(chatResponse);
       } else {
         final errorData = json.decode(response.body);
-        return ApiResponse.error(errorData['detail'] ?? 'FAQ request failed');
+        return ApiResponse.error(errorData['detail'] ?? 'Chat request failed');
       }
     } catch (e) {
       return ApiResponse.error('Network error: $e');
     }
   }
 
-  /// Search PDF/SOP documents (Action Table B: PDF/SOP Answering)
+  /// Send FAQ chat message using clinic-specific SOPs (Legacy method)
+  static Future<ApiResponse<ChatResponse>> sendFaqMessage({
+    required String clinicId,
+    required String message,
+    required String language,
+  }) async {
+    // Redirect to unified chat endpoint
+    return sendChatMessage(
+      clinicId: clinicId,
+      message: message,
+      language: language,
+    );
+  }
+
+  /// Search PDF/SOP documents (Legacy method - redirects to unified chat)
   static Future<ApiResponse<ChatResponse>> searchDocuments({
     required String clinicId,
     required String query,
     required String language,
   }) async {
-    try {
-      final response = await http.post(
-        Uri.parse('$baseUrl/patients/chat/pdf'),
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode({
-          'clinic_id': clinicId,
-          'message': query,
-          'language': language,
-        }),
-      );
-
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        final chatResponse = ChatResponse.fromJson(data);
-        return ApiResponse.success(chatResponse);
-      } else {
-        final errorData = json.decode(response.body);
-        return ApiResponse.error(errorData['detail'] ?? 'Document search failed');
-      }
-    } catch (e) {
-      return ApiResponse.error('Network error: $e');
-    }
+    // Redirect to unified chat endpoint
+    return sendChatMessage(
+      clinicId: clinicId,
+      message: query,
+      language: language,
+    );
   }
 
   /// Book appointment (Action Table A: Appointment Booking)

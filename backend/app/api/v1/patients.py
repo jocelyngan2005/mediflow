@@ -29,55 +29,60 @@ router = APIRouter()
 @router.get("/clinics")
 async def get_available_clinics():
     """
-    Get list of available clinics - redirect to main clinics endpoint
+    Get list of available clinics - simplified version to avoid circular imports
     """
-    from app.api.v1.clinics import get_all_clinics
-    return await get_all_clinics()
+    return [
+        {
+            "clinic_id": "klinik-bandar-utama",
+            "name": "Klinik Bandar Utama",
+            "address": "Bandar Utama, Petaling Jaya",
+            "phone": "+603-7725-0123",
+            "email": "info@klinikbandarutama.com",
+            "operating_hours": "Mon-Fri: 8AM-10PM, Sat-Sun: 8AM-6PM",
+            "languages_supported": ["English", "Bahasa Malaysia", "Mandarin"],
+            "services": ["General Consultation", "Health Screening", "Vaccination", "Minor Surgery"],
+            "is_active": True
+        },
+        {
+            "clinic_id": "klinik-sri-hartamas", 
+            "name": "Klinik Sri Hartamas",
+            "address": "Sri Hartamas, Kuala Lumpur",
+            "phone": "+603-6201-9876",
+            "email": "contact@klinikshartamas.com",
+            "operating_hours": "Mon-Fri: 9AM-9PM, Sat: 9AM-5PM, Sun: Closed",
+            "languages_supported": ["English", "Bahasa Malaysia", "Tamil"],
+            "services": ["Family Medicine", "Pediatrics", "Women's Health", "Travel Medicine"],
+            "is_active": True
+        }
+    ]
 
-@router.post("/chat/sop", response_model=ChatResponse)
-async def ask_sop(request: ChatRequest):
+@router.post("/chat", response_model=ChatResponse)
+async def unified_chat(request: ChatRequest):
     """
-    Handles clinic-specific SOP questions: 'Buka pukul berapa?', 'Ada vaksin?'
-    Requires clinic_id to route to correct knowledge base
+    Unified chat endpoint for both FAQ and SOP questions
+    Uses SOP QnA Action Table to answer all types of questions
+    Input: user question, clinic_name → Output: response, source_document
     """
     try:
         clinic_name = get_clinic_name_from_id(request.clinic_id, request.clinic_name)
-        answer = await jamai_service.pdf_sop_answering(
+        sop_result = await jamai_service.pdf_sop_answering(
             clinic_id=request.clinic_id,
             clinic_name=clinic_name,
-            user_query=request.message,
+            question=request.message,
             language=request.language
         )
         return ChatResponse(
-            reply=answer,
-            source_document=f"{request.clinic_id}-sop-knowledge"
+            reply=sop_result.get("response", "No answer found"),
+            source_document=sop_result.get("source_document", "")
         )
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error processing SOP query: {str(e)}")
-
-@router.post("/chat/faq", response_model=ChatResponse)
-async def ask_faq(request: ChatRequest):
-    """
-    Handles clinic-specific FAQ questions
-    """
-    try:
-        answer = await jamai_service.chat_with_faqs(
-            clinic_id=request.clinic_id,
-            user_query=request.message,
-            language=request.language
-        )
-        return ChatResponse(
-            reply=answer,
-            source_document=f"{request.clinic_id}-faqs-knowledge"
-        )
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error processing FAQ query: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error processing chat query: {str(e)}")
 
 @router.post("/chat/pdf", response_model=ChatResponse)
 async def search_pdf_sop(request: ChatRequest):
     """
-    Search through clinic-specific PDFs and SOPs using Action Table B (PDF/SOP Answering)
-    Input: user query, clinic_name → Output: user-friendly response
+    Legacy endpoint - Search through clinic-specific PDFs and SOPs using Action Table B (SOP QnA)
+    Redirects to the same SOP QnA action table as the unified chat endpoint
     """
     try:
         clinic_name = get_clinic_name_from_id(request.clinic_id, request.clinic_name)
@@ -98,8 +103,7 @@ async def search_pdf_sop(request: ChatRequest):
 async def book_appointment(request: ChatRequest):
     """
     Handles appointment booking using Action Table A (Appointment Booking)
-    Input: user query, clinic_name → Output: booking response with user-friendly message
-    Understands intent, fetches slots, checks SOPs, drafts recommendations
+    Input: user_input, clinic_name → Output: refined_user_message, booking_record
     """
     try:
         clinic_name = get_clinic_name_from_id(request.clinic_id, request.clinic_name)
