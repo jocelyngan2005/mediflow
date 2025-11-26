@@ -73,6 +73,8 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                       color: AppTheme.primaryBlue,
                       borderRadius: BorderRadius.circular(16),
                     ),
+                    indicatorPadding: EdgeInsets.zero,
+                    labelPadding: EdgeInsets.zero,
                     labelColor: Colors.white,
                     unselectedLabelColor: AppTheme.darkText,
                     dividerColor: Colors.transparent,
@@ -264,33 +266,18 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
   }
 
   Widget _buildGuestButton() {
-    return Container(
+    return SizedBox(
       width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: AppTheme.lightPeach,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppTheme.softPeach, width: 2),
-      ),
-      child: Column(
-        children: [
-          Text(
-            'Don\'t want to create an account?',
-            style: Theme.of(context).textTheme.bodyMedium,
-          ),
-          const SizedBox(height: 12),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.of(context).pushReplacement(
-                MaterialPageRoute(builder: (_) => const ClinicSelectionScreen(isGuest: true)),
-              );
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.softPeach,
-            ),
-            child: const Text('Continue as Guest'),
-          ),
-        ],
+      child: ElevatedButton(
+        onPressed: () {
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (_) => const ClinicSelectionScreen(isGuest: true)),
+          );
+        },
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.grey[400],
+        ),
+        child: const Text('Continue as Guest'),
       ),
     );
   }

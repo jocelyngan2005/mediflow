@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:mediflow/theme/app_theme.dart';
 import 'package:mediflow/screens/clinic_selection_screen.dart';
+import 'package:mediflow/screens/ai_assistant_screen.dart';
+import 'package:mediflow/screens/appointments_screen.dart';
+import 'package:mediflow/screens/medication_screen.dart';
+import 'package:mediflow/screens/profile_screen.dart';
 import 'package:mediflow/widgets/menu_card.dart';
 
 class MainMenuScreen extends StatelessWidget {
@@ -69,13 +73,13 @@ class MainMenuScreen extends StatelessWidget {
                   childAspectRatio: 0.85,
                   children: [
                     MenuCard(
-                      title: 'AI Nurse',
-                      subtitle: 'Chat with AI',
+                      title: 'AI Assistant',
+                      subtitle: 'FAQ & Documents',
                       icon: Icons.smart_toy_rounded,
                       color: AppTheme.primaryBlue,
                       backgroundColor: AppTheme.lightBlue,
                       onTap: () {
-                        _navigateToScreen(context, 'AI Nurse');
+                        _navigateToScreen(context, 'AI Assistant');
                       },
                     ),
                     MenuCard(
@@ -86,16 +90,6 @@ class MainMenuScreen extends StatelessWidget {
                       backgroundColor: AppTheme.lightGreen,
                       onTap: () {
                         _navigateToScreen(context, 'Appointments');
-                      },
-                    ),
-                    MenuCard(
-                      title: 'SOP Search',
-                      subtitle: 'Guidelines & PDFs',
-                      icon: Icons.description_rounded,
-                      color: AppTheme.softOrange,
-                      backgroundColor: AppTheme.lightOrange,
-                      onTap: () {
-                        _navigateToScreen(context, 'SOP Search');
                       },
                     ),
                     MenuCard(
@@ -130,20 +124,25 @@ class MainMenuScreen extends StatelessWidget {
   }
 
   void _navigateToScreen(BuildContext context, String screenName) {
-    // For now, show a placeholder
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(screenName),
-        content: Text('$screenName screen coming soon!'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('OK'),
-          ),
-        ],
-      ),
-    );
+    Widget? screen;
+    
+    switch (screenName) {
+      case 'AI Assistant':
+        screen = AIAssistantScreen(clinic: clinic);
+        break;
+      case 'Appointments':
+        screen = AppointmentsScreen(clinic: clinic);
+        break;
+      case 'Profile':
+        screen = ProfileScreen(clinic: clinic, isGuest: isGuest);
+        break;
+    }
+
+    if (screen != null) {
+      Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => screen!),
+      );
+    }
   }
 
   void _showStaffPinDialog(BuildContext context) {
@@ -178,7 +177,11 @@ class MainMenuScreen extends StatelessWidget {
             onPressed: () {
               if (pinController.text == '1234') {
                 Navigator.pop(context);
-                _navigateToScreen(context, 'Medication');
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => MedicationScreen(clinic: clinic),
+                  ),
+                );
               } else {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('Invalid PIN')),
