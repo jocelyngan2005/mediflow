@@ -11,98 +11,60 @@ class AIAssistantScreen extends StatefulWidget {
   State<AIAssistantScreen> createState() => _AIAssistantScreenState();
 }
 
-class _AIAssistantScreenState extends State<AIAssistantScreen> with SingleTickerProviderStateMixin {
+class _AIAssistantScreenState extends State<AIAssistantScreen> with TickerProviderStateMixin {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final List<ChatMessage> _messages = [];
   bool _isTyping = false;
   String _currentLanguage = 'BM'; // BM or EN
-  late TabController _tabController;
-  int _currentTab = 0; // 0 = FAQ, 1 = SOP/Documents
+  bool _isConnected = false;
+  bool _hasUserSentMessage = false;
+  late AnimationController _dotAnimationController;
 
-  // FAQ quick chips
-  final List<String> _faqChipsBM = [
+  // Quick suggestion chips
+  final List<String> _quickChipsBM = [
     'Waktu operasi',
     'Rawatan tersedia',
     'Jadual vaksin',
     'Senarai harga',
-    'Ubat tersedia',
+    'Protokol denggi',
+    'COVID-19',
   ];
 
-  final List<String> _faqChipsEN = [
+  final List<String> _quickChipsEN = [
     'Operating hours',
     'Available treatments',
     'Vaccine schedule',
     'Price list',
-    'Available medications',
-  ];
-
-  // Document quick chips
-  final List<String> _docChipsBM = [
-    'Jadual imunisasi',
-    'Panduan vaksin',
-    'Protokol denggi',
-    'SOP influenza',
-    'COVID-19',
-  ];
-
-  final List<String> _docChipsEN = [
-    'Immunisation schedule',
-    'Vaccine guidelines',
     'Dengue protocol',
-    'Influenza SOP',
     'COVID-19',
   ];
 
-  // Available documents
-  final List<DocumentSource> _availableDocuments = [
-    DocumentSource(
-      title: 'Immunisation Schedule (BM)',
-      type: 'KKM Circular',
-      icon: Icons.vaccines,
-      color: AppTheme.primaryBlue,
-    ),
-    DocumentSource(
-      title: 'Child Vaccination Guidelines',
-      type: 'Clinic SOP',
-      icon: Icons.child_care,
-      color: AppTheme.softGreen,
-    ),
-    DocumentSource(
-      title: 'Dengue Prevention Protocol',
-      type: 'KKM Circular',
-      icon: Icons.bug_report,
-      color: AppTheme.softRed,
-    ),
-    DocumentSource(
-      title: 'Influenza Treatment Guidelines',
-      type: 'Clinic SOP',
-      icon: Icons.sick,
-      color: AppTheme.softOrange,
-    ),
-    DocumentSource(
-      title: 'COVID-19 Testing Protocol',
-      type: 'KKM Circular',
-      icon: Icons.coronavirus,
-      color: AppTheme.softPeach,
-    ),
-  ];
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
-    _tabController.addListener(() {
-      setState(() {
-        _currentTab = _tabController.index;
-      });
+    
+    // Initialize animation controller for blinking dot
+    _dotAnimationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    )..repeat(reverse: true);
+    
+    // Simulate connection: red for 3 seconds, then green
+    Future.delayed(const Duration(seconds: 3), () {
+      if (mounted) {
+        setState(() {
+          _isConnected = true;
+        });
+      }
     });
     
     // Welcome message
     _messages.add(ChatMessage(
       text: _currentLanguage == 'BM'
-          ? 'Selamat datang ke ${widget.clinic.name}! 👋\n\nSaya AI Assistant anda. Saya boleh membantu dengan:\n• Soalan tentang klinik (waktu, rawatan, harga)\n• Carian dokumen SOP dan panduan KKM\n\nBagaimana saya boleh membantu anda?'
-          : 'Welcome to ${widget.clinic.name}! 👋\n\nI\'m your AI Assistant. I can help with:\n• Clinic inquiries (hours, treatments, pricing)\n• SOP documents and KKM guidelines search\n\nHow can I help you today?',
+          ? 'Selamat datang ke ${widget.clinic.name}! 👋\n\nSaya AI Assistant anda. Saya boleh membantu dengan:\n• Soalan tentang klinik (waktu, rawatan, harga)\n• Carian dokumen SOP dan panduan KKM\n• Jadual vaksin dan imunisasi\n• Protokol pencegahan penyakit\n\nBagaimana saya boleh membantu anda?'
+          : 'Welcome to ${widget.clinic.name}! 👋\n\nI\'m your AI Assistant. I can help with:\n• Clinic inquiries (hours, treatments, pricing)\n• SOP documents and KKM guidelines\n• Vaccine and immunisation schedules\n• Disease prevention protocols\n\nHow can I help you today?',
       isUser: false,
       timestamp: DateTime.now(),
     ));
@@ -112,7 +74,7 @@ class _AIAssistantScreenState extends State<AIAssistantScreen> with SingleTicker
   void dispose() {
     _messageController.dispose();
     _scrollController.dispose();
-    _tabController.dispose();
+    _dotAnimationController.dispose();
     super.dispose();
   }
 
@@ -126,6 +88,7 @@ class _AIAssistantScreenState extends State<AIAssistantScreen> with SingleTicker
         timestamp: DateTime.now(),
       ));
       _isTyping = true;
+      _hasUserSentMessage = true; // Hide suggestions after first message
     });
 
     _messageController.clear();
@@ -238,12 +201,73 @@ class _AIAssistantScreenState extends State<AIAssistantScreen> with SingleTicker
     _scrollToBottom();
   }
 
-  List<String> _getCurrentChips() {
-    if (_currentTab == 0) {
-      return _currentLanguage == 'BM' ? _faqChipsBM : _faqChipsEN;
-    } else {
-      return _currentLanguage == 'BM' ? _docChipsBM : _docChipsEN;
-    }
+  Widget _buildStatusDot() {
+    return AnimatedBuilder(
+      animation: _dotAnimationController,
+      builder: (context, child) {
+        return Opacity(
+          opacity: 0.3 + (_dotAnimationController.value * 0.7),
+          child: Container(
+            width: 8,
+            height: 8,
+            decoration: BoxDecoration(
+              color: _isConnected ? Colors.green : Colors.red,
+              shape: BoxShape.circle,
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildQuickSuggestions() {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(
+                Icons.lightbulb_outline,
+                size: 16,
+                color: AppTheme.primaryBlue,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                _currentLanguage == 'BM' ? 'Cadangan Soalan:' : 'Quick Suggestions:',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: AppTheme.darkText,
+                    ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Center(
+            child: Wrap(
+              alignment: WrapAlignment.center,
+              spacing: 8,
+              runSpacing: 8,
+              children: (_currentLanguage == 'BM' ? _quickChipsBM : _quickChipsEN)
+                  .map((chip) => ActionChip(
+                        label: Text(chip),
+                        onPressed: () => _sendMessage(chip),
+                        backgroundColor: AppTheme.lightBlue,
+                        labelStyle: const TextStyle(
+                          color: AppTheme.primaryBlue,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        side: BorderSide.none,
+                      ))
+                  .toList(),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -253,15 +277,39 @@ class _AIAssistantScreenState extends State<AIAssistantScreen> with SingleTicker
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('AI Assistant 🤖', style: TextStyle(fontSize: 18)),
-            Text(
-              widget.clinic.name,
-              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.normal),
+            Text(widget.clinic.name, style: const TextStyle(fontSize: 18)),
+            Row(
+              children: [
+                Text(
+                  'AI Assistant',
+                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w300),
+                ),
+                const SizedBox(width: 6),
+                _buildStatusDot(),
+              ],
             ),
           ],
         ),
         backgroundColor: Colors.white,
         elevation: 0,
+        scrolledUnderElevation: 0,
+        shadowColor: Colors.black.withOpacity(0.1),
+        surfaceTintColor: Colors.transparent,
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Container(
+            height: 1,
+            decoration: BoxDecoration(
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.08),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+          ),
+        ),
         actions: [
           Container(
             margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
@@ -287,273 +335,152 @@ class _AIAssistantScreenState extends State<AIAssistantScreen> with SingleTicker
       ),
       body: Column(
         children: [
-          // Mode Tabs
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 4,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: TabBar(
-              controller: _tabController,
-              labelColor: AppTheme.primaryBlue,
-              unselectedLabelColor: AppTheme.greyText,
-              indicatorColor: AppTheme.primaryBlue,
-              tabs: [
-                Tab(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.question_answer, size: 18),
-                      const SizedBox(width: 8),
-                      Text(_currentLanguage == 'BM' ? 'FAQ Klinik' : 'Clinic FAQ'),
-                    ],
-                  ),
-                ),
-                Tab(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.description, size: 18),
-                      const SizedBox(width: 8),
-                      Text(_currentLanguage == 'BM' ? 'Dokumen SOP' : 'SOP Docs'),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // Quick Chips
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 4,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Icon(
-                      _currentTab == 0 ? Icons.lightbulb_outline : Icons.folder_open,
-                      size: 16,
-                      color: AppTheme.primaryBlue,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      _currentTab == 0
-                          ? (_currentLanguage == 'BM' ? 'Topik Popular:' : 'Popular Topics:')
-                          : (_currentLanguage == 'BM' ? 'Dokumen Popular:' : 'Popular Documents:'),
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
-                            color: AppTheme.darkText,
-                          ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: _getCurrentChips()
-                      .map((chip) => ActionChip(
-                            label: Text(chip),
-                            onPressed: () => _sendMessage(chip),
-                            backgroundColor: _currentTab == 0 
-                                ? AppTheme.lightBlue 
-                                : AppTheme.lightOrange,
-                            labelStyle: TextStyle(
-                              color: _currentTab == 0 
-                                  ? AppTheme.primaryBlue 
-                                  : AppTheme.softOrange,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                            ),
-                            side: BorderSide.none,
-                          ))
-                      .toList(),
-                ),
-              ],
-            ),
-          ),
-
-          // Show document library when in SOP tab and no messages
-          if (_currentTab == 1 && _messages.length <= 1)
-            Expanded(
-              child: _buildDocumentLibrary(),
-            )
-          else
-            // Chat Messages
-            Expanded(
-              child: Container(
-                color: AppTheme.background,
-                child: ListView.builder(
-                  controller: _scrollController,
-                  padding: const EdgeInsets.all(16),
-                  itemCount: _messages.length + (_isTyping ? 1 : 0),
-                  itemBuilder: (context, index) {
-                    if (_isTyping && index == _messages.length) {
-                      return _buildTypingIndicator();
-                    }
+          // Chat Messages
+          Expanded(
+            child: Container(
+              color: AppTheme.background,
+              child: ListView.builder(
+                controller: _scrollController,
+                padding: const EdgeInsets.all(16),
+                itemCount: _messages.length + (_isTyping ? 1 : 0) + (!_hasUserSentMessage ? 1 : 0),
+                itemBuilder: (context, index) {
+                  // Show all messages first
+                  if (index < _messages.length) {
                     return _buildMessageBubble(_messages[index]);
-                  },
-                ),
+                  }
+                  
+                  // After all messages, show typing indicator if typing
+                  if (_isTyping && index == _messages.length) {
+                    return _buildTypingIndicator();
+                  }
+                  
+                  // After typing indicator (or messages if not typing), show suggestions if user hasn't sent a message
+                  if (!_hasUserSentMessage && index == _messages.length + (_isTyping ? 1 : 0)) {
+                    return _buildQuickSuggestions();
+                  }
+                  
+                  return const SizedBox.shrink();
+                },
               ),
             ),
+          ),
 
           // Message Input
           Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 4,
-                  offset: const Offset(0, -2),
-                ),
-              ],
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             child: SafeArea(
-              child: Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _messageController,
-                      decoration: InputDecoration(
-                        hintText: _currentTab == 0
-                            ? (_currentLanguage == 'BM'
-                                ? 'Tanya tentang klinik...'
-                                : 'Ask about clinic...')
-                            : (_currentLanguage == 'BM'
-                                ? 'Cari dalam dokumen...'
-                                : 'Search in documents...'),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(24),
-                          borderSide: BorderSide.none,
-                        ),
-                        filled: true,
-                        fillColor: AppTheme.background,
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 20,
-                          vertical: 12,
-                        ),
+              child: Container(
+                margin: const EdgeInsets.only(bottom: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(30),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    // Paperclip icon
+                    IconButton(
+                      icon: const Icon(
+                        Icons.attach_file,
+                        color: Colors.grey,
+                        size: 22,
                       ),
-                      textInputAction: TextInputAction.send,
-                      onSubmitted: _sendMessage,
+                      onPressed: () {
+                        // TODO: Handle file attachment
+                      },
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  Container(
-                    decoration: BoxDecoration(
-                      color: _currentTab == 0 ? AppTheme.primaryBlue : AppTheme.softOrange,
-                      shape: BoxShape.circle,
+                    // Text input
+                    Expanded(
+                      child: TextField(
+                        controller: _messageController,
+                        decoration: InputDecoration(
+                          hintText: _currentLanguage == 'BM'
+                              ? 'Tanya apa-apa soalan...'
+                              : 'Ask any question...',
+                          border: InputBorder.none,
+                          enabledBorder: InputBorder.none,
+                          focusedBorder: InputBorder.none,
+                          errorBorder: InputBorder.none,
+                          disabledBorder: InputBorder.none,
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 12,
+                          ),
+                        ),
+                        textInputAction: TextInputAction.send,
+                        onSubmitted: _sendMessage,
+                      ),
                     ),
-                    child: IconButton(
-                      icon: const Icon(Icons.send_rounded, color: Colors.white),
-                      onPressed: () => _sendMessage(_messageController.text),
+                    // Mic icon
+                    IconButton(
+                      icon: const Icon(
+                        Icons.mic,
+                        color: Colors.grey,
+                        size: 22,
+                      ),
+                      onPressed: () {
+                        // TODO: Handle voice input
+                      },
                     ),
-                  ),
-                ],
+                    const SizedBox(width: 4),
+                    // Send button
+                    Container(
+                      margin: const EdgeInsets.only(right: 4),
+                      decoration: const BoxDecoration(
+                        color: AppTheme.primaryBlue,
+                        shape: BoxShape.circle,
+                      ),
+                      child: IconButton(
+                        icon: const Icon(Icons.send_rounded, color: Colors.white, size: 20),
+                        onPressed: () => _sendMessage(_messageController.text),
+                        padding: const EdgeInsets.all(8),
+                        constraints: const BoxConstraints(),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildDocumentLibrary() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            _currentLanguage == 'BM' ? 'Dokumen Tersedia' : 'Available Documents',
-            style: Theme.of(context).textTheme.headlineMedium,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            _currentLanguage == 'BM' 
-                ? 'Pilih dokumen atau tanya soalan' 
-                : 'Select a document or ask a question',
-            style: Theme.of(context).textTheme.bodyMedium,
-          ),
-          const SizedBox(height: 20),
-          ...(_availableDocuments.map((doc) => _buildDocumentCard(doc))),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDocumentCard(DocumentSource doc) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: ListTile(
-        contentPadding: const EdgeInsets.all(16),
-        leading: Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: doc.color.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Icon(doc.icon, color: doc.color, size: 28),
-        ),
-        title: Text(
-          doc.title,
-          style: const TextStyle(
-            fontWeight: FontWeight.w600,
-            fontSize: 15,
-          ),
-        ),
-        subtitle: Text(
-          doc.type,
-          style: const TextStyle(
-            color: AppTheme.greyText,
-            fontSize: 12,
-          ),
-        ),
-        trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-        onTap: () {
-          _sendMessage(doc.title);
-        },
       ),
     );
   }
 
   Widget _buildMessageBubble(ChatMessage message) {
+    // System messages (like language switch) are displayed as centered text
+    if (message.isSystem) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 16, top: 8),
+        child: Center(
+          child: Text(
+            message.text,
+            style: TextStyle(
+              color: AppTheme.greyText,
+              fontSize: 12,
+              fontStyle: FontStyle.italic,
+            ),
+          ),
+        ),
+      );
+    }
+    
+    // Regular message bubbles
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment:
             message.isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
         children: [
-          if (!message.isUser && !message.isSystem)
+          if (!message.isUser)
             Container(
               margin: const EdgeInsets.only(right: 8),
               padding: const EdgeInsets.all(8),
@@ -571,21 +498,17 @@ class _AIAssistantScreenState extends State<AIAssistantScreen> with SingleTicker
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
-                color: message.isSystem
-                    ? AppTheme.lightGreen
-                    : message.isUser
-                        ? AppTheme.primaryBlue
-                        : Colors.white,
+                color: message.isUser
+                    ? AppTheme.primaryBlue
+                    : Colors.white,
                 borderRadius: BorderRadius.circular(20),
-                boxShadow: message.isSystem
-                    ? []
-                    : [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
-                          blurRadius: 4,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -724,18 +647,3 @@ class ChatMessage {
     this.sourceDocument,
   });
 }
-
-class DocumentSource {
-  final String title;
-  final String type;
-  final IconData icon;
-  final Color color;
-
-  DocumentSource({
-    required this.title,
-    required this.type,
-    required this.icon,
-    required this.color,
-  });
-}
-
