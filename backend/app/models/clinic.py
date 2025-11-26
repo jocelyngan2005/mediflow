@@ -33,14 +33,3 @@ class ClinicRequest(BaseModel):
     operating_hours: str
     languages_supported: List[str] = ["BM", "EN"]
     services: List[str] = []
-
-class ClinicTableConfig(BaseModel):
-    """Configuration for clinic-specific JamAI tables"""
-    clinic_id: str
-    knowledge_table_sop: str
-    knowledge_table_meds: str
-    knowledge_table_faqs: str
-    # The 3 Action Tables from JamAI Base
-    action_table_appointment_booking: str      # A. Appointment Booking
-    action_table_pdf_sop_answering: str       # B. PDF/SOP Answering  
-    action_table_medication_lookup: str       # C. Medication Lookup (staff only)
