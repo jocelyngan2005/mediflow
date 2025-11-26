@@ -5,7 +5,7 @@ import uvicorn
 
 # Import the routers we planned
 # Note: Ensure you have created the files in app/api/v1/ as discussed previously
-from app.api.v1 import patients, staff
+from app.api.v1 import patients, staff, clinics
 from app.core.config import settings
 
 app = FastAPI(
@@ -40,6 +40,20 @@ app.include_router(
     tags=["Clinic Staff"]
 )
 
+# 3. Clinic Management Routes
+app.include_router(
+    clinics.router,
+    prefix="/api/v1/clinics", 
+    tags=["Clinic Management"]
+)
+
+# 3. Clinic Management Routes (Public clinic list, Protected admin functions)
+app.include_router(
+    clinics.router, 
+    prefix="/api/v1", 
+    tags=["Clinic Management"]
+)
+
 @app.get("/")
 async def health_check():
     """
@@ -47,8 +61,18 @@ async def health_check():
     """
     return {
         "status": "online",
-        "service": "MediFlow AI Nurse",
-        "project_id": settings.JAMAI_PROJECT_ID
+        "service": "MediFlow AI Nurse - Multi-Clinic Edition",
+        "project_id": settings.JAMAI_PROJECT_ID,
+        "features": [
+            "Multi-clinic support",
+            "AI FAQ Nurse (BM/English)", 
+            "AI Appointment Triage",
+            "PDF & SOP Search",
+            "Medication Quick Lookup (Staff Only)",
+            "Multilingual Support"
+        ],
+        "configured_clinics": settings.get_all_clinic_ids(),
+        "version": "2.0.0"
     }
 
 if __name__ == "__main__":

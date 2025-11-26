@@ -21,7 +21,8 @@ class _ClinicSelectionScreenState extends State<ClinicSelectionScreen> {
   // Sample clinic data
   final List<Clinic> _clinics = [
     Clinic(
-      name: 'Klinik Kesihatan Bandar',
+      clinicId: 'klinik-bandar-utama',
+      name: 'Klinik Bandar Utama',
       address: '191, Jalan Bandar Puteri Jaya 1/2, Bandar Puteri Jaya, 08000 Sungai Petani, Kedah',
       distance: '0.5km',
       hours: 'Wednesday 8:00am to 8:00pm',
@@ -30,7 +31,8 @@ class _ClinicSelectionScreenState extends State<ClinicSelectionScreen> {
       rating: 5,
     ),
     Clinic(
-      name: 'Klinik Dr. Ahmad',
+      clinicId: 'klinik-sri-hartamas',
+      name: 'Klinik Sri Hartamas',
       address: 'Taman Desa, Kuala Lumpur',
       distance: '1.2km',
       hours: 'Mon-Sat: 9:00 AM - 9:00 PM',
@@ -39,7 +41,8 @@ class _ClinicSelectionScreenState extends State<ClinicSelectionScreen> {
       rating: 4,
     ),
     Clinic(
-      name: 'Pusat Kesihatan Setapak',
+      clinicId: 'klinik-desa-jaya',
+      name: 'Klinik Desa Jaya',
       address: 'Setapak, Kuala Lumpur',
       distance: '2.0km',
       hours: 'Mon-Sun: 24 Hours',
@@ -48,6 +51,7 @@ class _ClinicSelectionScreenState extends State<ClinicSelectionScreen> {
       rating: 5,
     ),
     Clinic(
+      clinicId: 'klinik-wangsa',
       name: 'Klinik Famili Wangsa Maju',
       address: 'Wangsa Maju, Kuala Lumpur',
       distance: '2.8km',
@@ -442,6 +446,7 @@ class _ClinicSelectionScreenState extends State<ClinicSelectionScreen> {
 }
 
 class Clinic {
+  final String clinicId;  // Added for API integration
   final String name;
   final String address;
   final String distance;
@@ -451,6 +456,7 @@ class Clinic {
   final int rating;
 
   Clinic({
+    required this.clinicId,
     required this.name,
     required this.address,
     required this.distance,

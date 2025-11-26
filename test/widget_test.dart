@@ -11,20 +11,17 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mediflow/main.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
+  testWidgets('MediFlow app loads correctly', (WidgetTester tester) async {
     // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+    await tester.pumpWidget(const ClinicFlowApp());
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    // Wait for initial animations to complete
+    await tester.pump(const Duration(milliseconds: 100));
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
-
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    // Verify that the app loads without crashing
+    expect(find.byType(MaterialApp), findsOneWidget);
+    
+    // Verify splash screen is shown
+    expect(find.byType(Scaffold), findsWidgets);
   });
 }
