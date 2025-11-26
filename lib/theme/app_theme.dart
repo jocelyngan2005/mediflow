@@ -125,6 +125,11 @@ class AppTheme {
         color: Colors.white,
       ),
       appBarTheme: AppBarTheme(
+        elevation: 4,
+        scrolledUnderElevation: 4,
+        shadowColor: Colors.black.withOpacity(0.1),
+        surfaceTintColor: Colors.transparent,
+        backgroundColor: Colors.white,
         titleTextStyle: GoogleFonts.poppins(
           fontSize: 18,
           fontWeight: FontWeight.w400,
