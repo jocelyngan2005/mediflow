@@ -277,12 +277,20 @@ class _AIAssistantScreenState extends State<AIAssistantScreen> with TickerProvid
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(widget.clinic.name, style: const TextStyle(fontSize: 18)),
+            Text(
+              widget.clinic.name,
+              style: Theme.of(context).appBarTheme.titleTextStyle?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
             Row(
               children: [
                 Text(
                   'AI Assistant',
-                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w300),
+                  style: Theme.of(context).appBarTheme.titleTextStyle?.copyWith(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w300,
+                  ),
                 ),
                 const SizedBox(width: 6),
                 _buildStatusDot(),

@@ -124,6 +124,14 @@ class AppTheme {
         ),
         color: Colors.white,
       ),
+      appBarTheme: AppBarTheme(
+        titleTextStyle: GoogleFonts.poppins(
+          fontSize: 18,
+          fontWeight: FontWeight.w400,
+          color: darkText,
+        ),
+        iconTheme: const IconThemeData(color: darkText),
+      ),
     );
   }
 }
