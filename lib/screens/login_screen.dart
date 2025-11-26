@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:mediflow/theme/app_theme.dart';
 import 'package:mediflow/screens/clinic_selection_screen.dart';
+import 'package:mediflow/screens/signup_screen.dart';
+import 'package:mediflow/screens/staff_main_menu.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -9,95 +11,66 @@ class LoginScreen extends StatefulWidget {
   State<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStateMixin {
-  late TabController _tabController;
+class _LoginScreenState extends State<LoginScreen> {
   final _loginFormKey = GlobalKey<FormState>();
-  final _signupFormKey = GlobalKey<FormState>();
   
   final _loginEmailController = TextEditingController();
   final _loginPasswordController = TextEditingController();
-  final _signupNameController = TextEditingController();
-  final _signupEmailController = TextEditingController();
-  final _signupPhoneController = TextEditingController();
-  final _signupPasswordController = TextEditingController();
   
   bool _obscurePassword = true;
 
   @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(length: 2, vsync: this);
-  }
-
-  @override
   void dispose() {
-    _tabController.dispose();
     _loginEmailController.dispose();
     _loginPasswordController.dispose();
-    _signupNameController.dispose();
-    _signupEmailController.dispose();
-    _signupPhoneController.dispose();
-    _signupPasswordController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SafeArea(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 20),
-                Text(
-                  'Welcome Back!',
-                  style: Theme.of(context).textTheme.displayMedium,
+      body: Container(
+        decoration: const BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage('assets/user_auth_bg.jpg'),
+            fit: BoxFit.cover,
+          ),
+        ),
+        child: SafeArea(
+          child: Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24.0),
+              child: Card(
+                color: Colors.white,
+                elevation: 8,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(24),
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  'Login or create an account to continue',
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ),
-                const SizedBox(height: 30),
-                Container(
-                  decoration: BoxDecoration(
-                    color: AppTheme.lightBlue,
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: TabBar(
-                    controller: _tabController,
-                    indicator: BoxDecoration(
-                      color: AppTheme.primaryBlue,
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    indicatorPadding: EdgeInsets.zero,
-                    labelPadding: EdgeInsets.zero,
-                    labelColor: Colors.white,
-                    unselectedLabelColor: AppTheme.darkText,
-                    dividerColor: Colors.transparent,
-                    tabs: const [
-                      Tab(text: 'Login'),
-                      Tab(text: 'Sign Up'),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 30),
-                SizedBox(
-                  height: 450,
-                  child: TabBarView(
-                    controller: _tabController,
+                child: Padding(
+                  padding: const EdgeInsets.all(32.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
                     children: [
+                      Text(
+                        'Welcome Back!',
+                        style: Theme.of(context).textTheme.displayMedium,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Login to continue',
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
+                      const SizedBox(height: 40),
                       _buildLoginForm(),
-                      _buildSignupForm(),
+                      const SizedBox(height: 16),
+                      _buildGuestButton(),
+                      const SizedBox(height: 24),
+                      _buildSignUpLink(),
                     ],
                   ),
                 ),
-                const SizedBox(height: 20),
-                _buildGuestButton(),
-              ],
+              ),
             ),
           ),
         ),
@@ -146,25 +119,41 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
               return null;
             },
           ),
-          const SizedBox(height: 12),
-          Align(
-            alignment: Alignment.centerRight,
-            child: TextButton(
-              onPressed: () {
-                // Forgot password
-              },
-              child: const Text('Forgot Password?'),
-            ),
-          ),
           const SizedBox(height: 24),
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
               onPressed: () {
                 if (_loginFormKey.currentState!.validate()) {
-                  Navigator.of(context).pushReplacement(
-                    MaterialPageRoute(builder: (_) => const ClinicSelectionScreen(isGuest: false)),
-                  );
+                  // Prototype login logic
+                  final email = _loginEmailController.text.trim().toLowerCase();
+                  
+                  if (email == 'staff@gmail.com') {
+                    // Navigate to medication screen for staff
+                    final mockClinic = Clinic(
+                      clinicId: 'clinic_staff',
+                      name: 'General Hospital',
+                      address: '123 Main Street',
+                      distance: '2.5 km',
+                      hours: '8:00 AM - 8:00 PM',
+                      isOpen: true,
+                      phoneNumber: '04-123-4567',
+                      rating: 5,
+                    );
+                    Navigator.of(context).pushReplacement(
+                      MaterialPageRoute(builder: (_) => StaffMainMenu(clinic: mockClinic)),
+                    );
+                  } else if (email == 'user@gmail.com') {
+                    // Navigate to clinic selection screen for regular users
+                    Navigator.of(context).pushReplacement(
+                      MaterialPageRoute(builder: (_) => const ClinicSelectionScreen(isGuest: false)),
+                    );
+                  } else {
+                    // Default behavior for other emails
+                    Navigator.of(context).pushReplacement(
+                      MaterialPageRoute(builder: (_) => const ClinicSelectionScreen(isGuest: false)),
+                    );
+                  }
                 }
               },
               child: const Text('Login'),
@@ -175,109 +164,53 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
     );
   }
 
-  Widget _buildSignupForm() {
-    return Form(
-      key: _signupFormKey,
-      child: SingleChildScrollView(
-        child: Column(
-          children: [
-            TextFormField(
-              controller: _signupNameController,
-              decoration: const InputDecoration(
-                labelText: 'Full Name',
-                prefixIcon: Icon(Icons.person_outline),
-              ),
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please enter your name';
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _signupEmailController,
-              decoration: const InputDecoration(
-                labelText: 'Email',
-                prefixIcon: Icon(Icons.email_outlined),
-              ),
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please enter your email';
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _signupPhoneController,
-              decoration: const InputDecoration(
-                labelText: 'Phone Number',
-                prefixIcon: Icon(Icons.phone_outlined),
-              ),
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please enter your phone number';
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _signupPasswordController,
-              obscureText: _obscurePassword,
-              decoration: InputDecoration(
-                labelText: 'Password',
-                prefixIcon: const Icon(Icons.lock_outline),
-                suffixIcon: IconButton(
-                  icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility),
-                  onPressed: () {
-                    setState(() {
-                      _obscurePassword = !_obscurePassword;
-                    });
-                  },
-                ),
-              ),
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please enter a password';
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 24),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () {
-                  if (_signupFormKey.currentState!.validate()) {
-                    Navigator.of(context).pushReplacement(
-                      MaterialPageRoute(builder: (_) => const ClinicSelectionScreen(isGuest: false)),
-                    );
-                  }
-                },
-                child: const Text('Sign Up'),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _buildGuestButton() {
     return SizedBox(
       width: double.infinity,
-      child: ElevatedButton(
+      child: OutlinedButton(
         onPressed: () {
           Navigator.of(context).pushReplacement(
             MaterialPageRoute(builder: (_) => const ClinicSelectionScreen(isGuest: true)),
           );
         },
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.grey[400],
+        style: OutlinedButton.styleFrom(
+          backgroundColor: Colors.transparent,
+          side: const BorderSide(color: AppTheme.primaryBlue, width: 2),
+          foregroundColor: AppTheme.primaryBlue,
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(40),
+          ),
         ),
         child: const Text('Continue as Guest'),
+      ),
+    );
+  }
+
+  Widget _buildSignUpLink() {
+    return Center(
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            "Don't have an account? ",
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+          GestureDetector(
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const SignUpScreen()),
+              );
+            },
+            child: Text(
+              'Sign Up here',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: AppTheme.primaryBlue,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
