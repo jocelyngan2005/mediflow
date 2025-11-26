@@ -78,7 +78,8 @@ class ApiClinic {
 
 class ApiService {
   // Update this to your backend URL
-  static const String baseUrl = 'http://localhost:8000/api/v1';
+  // Use localhost with ADB reverse port forwarding for physical devices
+  static const String baseUrl = 'http://localhost:8080/api/v1';
   static const String staffSecretCode = 'MEDIFLOW-ADMIN-2024';
 
   /// Get available clinics
