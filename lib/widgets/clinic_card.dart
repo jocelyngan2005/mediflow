@@ -111,12 +111,11 @@ class _ClinicCardState extends State<ClinicCard> {
                       ),
                       child: Text(
                         widget.clinic.isOpen ? 'Open' : 'Closed',
-                        style: TextStyle(
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
                           color: widget.clinic.isOpen
                               ? AppTheme.softGreen
                               : AppTheme.softRed,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ),

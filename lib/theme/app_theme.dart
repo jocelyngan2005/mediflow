@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
   // Soft pastel colors inspired by the design
@@ -28,45 +29,46 @@ class AppTheme {
         background: background,
       ),
       scaffoldBackgroundColor: background,
-      fontFamily: 'Roboto',
-      textTheme: const TextTheme(
-        displayLarge: TextStyle(
-          fontSize: 32,
-          fontWeight: FontWeight.bold,
-          color: darkText,
-        ),
-        displayMedium: TextStyle(
-          fontSize: 28,
-          fontWeight: FontWeight.bold,
-          color: darkText,
-        ),
-        headlineLarge: TextStyle(
-          fontSize: 24,
-          fontWeight: FontWeight.bold,
-          color: darkText,
-        ),
-        headlineMedium: TextStyle(
-          fontSize: 20,
-          fontWeight: FontWeight.w600,
-          color: darkText,
-        ),
-        titleLarge: TextStyle(
-          fontSize: 18,
-          fontWeight: FontWeight.w600,
-          color: darkText,
-        ),
-        bodyLarge: TextStyle(
-          fontSize: 16,
-          color: darkText,
-        ),
-        bodyMedium: TextStyle(
-          fontSize: 14,
-          color: greyText,
-        ),
-        labelLarge: TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.w600,
-          color: Colors.white,
+      textTheme: GoogleFonts.poppinsTextTheme(
+        const TextTheme(
+          displayLarge: TextStyle(
+            fontSize: 32,
+            fontWeight: FontWeight.bold,
+            color: darkText,
+          ),
+          displayMedium: TextStyle(
+            fontSize: 28,
+            fontWeight: FontWeight.bold,
+            color: darkText,
+          ),
+          headlineLarge: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: darkText,
+          ),
+          headlineMedium: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+            color: darkText,
+          ),
+          titleLarge: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+            color: darkText,
+          ),
+          bodyLarge: TextStyle(
+            fontSize: 16,
+            color: darkText,
+          ),
+          bodyMedium: TextStyle(
+            fontSize: 14,
+            color: greyText,
+          ),
+          labelLarge: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: Colors.white,
+          ),
         ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
@@ -78,7 +80,7 @@ class AppTheme {
             borderRadius: BorderRadius.circular(30),
           ),
           elevation: 0,
-          textStyle: const TextStyle(
+          textStyle: GoogleFonts.poppins(
             fontSize: 16,
             fontWeight: FontWeight.w600,
           ),
@@ -92,7 +94,7 @@ class AppTheme {
             borderRadius: BorderRadius.circular(30),
           ),
           side: const BorderSide(color: primaryBlue, width: 2),
-          textStyle: const TextStyle(
+          textStyle: GoogleFonts.poppins(
             fontSize: 16,
             fontWeight: FontWeight.w600,
           ),
