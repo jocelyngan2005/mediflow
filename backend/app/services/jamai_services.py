@@ -16,7 +16,7 @@ class JamAIService:
         """
         A. Appointment Booking Action Table
         Strict Input: user_input (str), clinic_name (str)
-        Strict Output: refined_user_message (str), booking_record (str json format)
+        Strict Output: available_time_slots, case_type, recommended_time, refined_user_message, booking_record
         """
         try:
             # Add row to Action Table using the working pattern from test_action.py
@@ -52,9 +52,9 @@ class JamAIService:
                 }
                         
             return {
-                "available_time_slots": "{}",
-                "case_type": "{}",
-                "recommended_time": "{}",
+                "available_time_slots": "[]",
+                "case_type": '{"case_type": "ROUTINE", "booking_needed": true, "response_template": "Please book an appointment"}',
+                "recommended_time": '{"slot_found": false}',
                 "refined_user_message": "Appointment request processed",
                 "booking_record": "{}"
             }
@@ -63,9 +63,9 @@ class JamAIService:
             logger.error(f"Error in appointment_booking for clinic {clinic_id}: {str(e)}")
             fallback_message = "Maaf, sistem tempahan menghadapi masalah." if language == "BM" else "Sorry, appointment booking system is experiencing issues."
             return {
-                "available_time_slots": "{}",
-                "case_type": "{}",
-                "recommended_time": "{}",
+                "available_time_slots": "[]",
+                "case_type": '{"case_type": "ROUTINE", "booking_needed": true, "response_template": "' + fallback_message + '"}',
+                "recommended_time": '{"slot_found": false}',
                 "refined_user_message": fallback_message,
                 "booking_record": "{}"
             }

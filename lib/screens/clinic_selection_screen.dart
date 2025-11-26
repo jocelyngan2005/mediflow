@@ -22,7 +22,7 @@ class _ClinicSelectionScreenState extends State<ClinicSelectionScreen> {
   final List<Clinic> _clinics = [
     Clinic(
       clinicId: 'clinic_001',
-      name: 'Klinik Kesihatan Bandar',
+      name: 'Klinik Bandar Utama',
       address: '191, Jalan Bandar Puteri Jaya 1/2, Bandar Puteri Jaya, 08000 Sungai Petani, Kedah',
       distance: '0.5km',
       hours: 'Wednesday 8:00am to 8:00pm',

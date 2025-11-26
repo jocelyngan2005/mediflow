@@ -103,7 +103,8 @@ async def search_pdf_sop(request: ChatRequest):
 async def book_appointment(request: ChatRequest):
     """
     Handles appointment booking using Action Table A (Appointment Booking)
-    Input: user_input, clinic_name → Output: refined_user_message, booking_record
+    Input: user_input, clinic_name → Output: structured appointment data
+    Returns all appointment booking fields in the reply as JSON
     """
     try:
         clinic_name = get_clinic_name_from_id(request.clinic_id, request.clinic_name)
@@ -113,8 +114,18 @@ async def book_appointment(request: ChatRequest):
             user_input=request.message,
             language=request.language
         )
+        
+        # Return structured data in reply field as JSON string
+        import json
+        structured_response = {
+            "available_time_slots": booking_result.get("available_time_slots", "[]"),
+            "case_type": booking_result.get("case_type", "{}"),
+            "recommended_time": booking_result.get("recommended_time", "{}"),
+            "refined_user_message": booking_result.get("refined_user_message", "Appointment processed")
+        }
+        
         return ChatResponse(
-            reply=booking_result.get("refined_user_message", "Appointment processed"),
+            reply=json.dumps(structured_response),
             source_document=booking_result.get("booking_record", "{}")
         )
     except Exception as e:
