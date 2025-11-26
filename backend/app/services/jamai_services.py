@@ -37,15 +37,24 @@ class JamAIService:
                 row = response.rows[0]
                 
                 # Access columns directly as in working test
-                refined_message = row.columns["refined_user_message"].text
+                available_time_slots = row.columns["available_time_slots"].text
+                case_type = row.columns["case_type"].text
+                recommended_time = row.columns["recommended_time"].text
+                refined_message = row.columns["refined_user_message"].text 
                 booking_record = row.columns.get("booking_record", {}).get("text", "{}")
                 
                 return {
+                    "available_time_slots": available_time_slots,
+                    "case_type": case_type,
+                    "recommended_time": recommended_time,
                     "refined_user_message": refined_message,
                     "booking_record": booking_record
                 }
                         
             return {
+                "available_time_slots": "{}",
+                "case_type": "{}",
+                "recommended_time": "{}",
                 "refined_user_message": "Appointment request processed",
                 "booking_record": "{}"
             }
@@ -54,6 +63,9 @@ class JamAIService:
             logger.error(f"Error in appointment_booking for clinic {clinic_id}: {str(e)}")
             fallback_message = "Maaf, sistem tempahan menghadapi masalah." if language == "BM" else "Sorry, appointment booking system is experiencing issues."
             return {
+                "available_time_slots": "{}",
+                "case_type": "{}",
+                "recommended_time": "{}",
                 "refined_user_message": fallback_message,
                 "booking_record": "{}"
             }
