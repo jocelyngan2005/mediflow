@@ -129,7 +129,7 @@ class _ClinicCardState extends State<ClinicCard> {
                     const Icon(
                       Icons.location_on_outlined,
                       size: 18,
-                      color: AppTheme.primaryBlue,
+                      color: AppTheme.darkText,
                     ),
                     const SizedBox(width: 8),
                     Expanded(
@@ -147,7 +147,7 @@ class _ClinicCardState extends State<ClinicCard> {
                     const Icon(
                       Icons.phone_outlined,
                       size: 18,
-                      color: AppTheme.primaryBlue,
+                      color: AppTheme.darkText,
                     ),
                     const SizedBox(width: 8),
                     Text(
@@ -169,7 +169,7 @@ class _ClinicCardState extends State<ClinicCard> {
                       const Icon(
                         Icons.access_time,
                         size: 18,
-                        color: AppTheme.primaryBlue,
+                        color: AppTheme.darkText,
                       ),
                       const SizedBox(width: 8),
                       Expanded(
