@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mediflow/theme/app_theme.dart';
 import 'package:mediflow/screens/clinic_selection_screen.dart';
-import 'package:mediflow/services/api_service.dart';
 
 class StaffAssistantScreen extends StatefulWidget {
   final Clinic clinic;
@@ -94,52 +93,167 @@ class _StaffAssistantScreenState extends State<StaffAssistantScreen> with Ticker
     _messageController.clear();
     _scrollToBottom();
 
-    try {
-      // Call the staff-specific medication lookup API
-      ApiResponse<StaffChatResponse> response = await ApiService.sendStaffChatMessage(
-        clinicId: widget.clinic.clinicId,
-        message: text,
-        language: _currentLanguage,
-      );
+    // Simulate API delay
+    await Future.delayed(const Duration(milliseconds: 1500));
 
-      setState(() {
-        if (response.success && response.data != null) {
-          _messages.add(ChatMessage(
-            text: response.data!.reply,
-            isUser: false,
-            timestamp: DateTime.now(),
-            medicationData: response.data!.medicationData,
-          ));
-        } else {
-          // Show error message
-          _messages.add(ChatMessage(
-            text: _getErrorMessage(response.error ?? 'Unknown error'),
-            isUser: false,
-            timestamp: DateTime.now(),
-            isSystem: true,
-          ));
-        }
-        _isTyping = false;
-      });
-    } catch (e) {
-      setState(() {
-        _messages.add(ChatMessage(
-          text: _getErrorMessage('Network error: $e'),
-          isUser: false,
-          timestamp: DateTime.now(),
-          isSystem: true,
-        ));
-        _isTyping = false;
-      });
-    }
+    // Generate mock response based on user message
+    final mockResponse = _generateMockResponse(text);
+
+    setState(() {
+      _messages.add(ChatMessage(
+        text: mockResponse.reply,
+        isUser: false,
+        timestamp: DateTime.now(),
+        medicationData: mockResponse.medicationData,
+      ));
+      _isTyping = false;
+    });
     
     _scrollToBottom();
   }
 
-  String _getErrorMessage(String error) {
-    return _currentLanguage == 'BM'
-        ? 'Maaf, sistem menghadapi masalah: $error\n\nSila cuba lagi.'
-        : 'Sorry, the system encountered an issue: $error\n\nPlease try again.';
+  // Mock response generator for frontend prototype
+  StaffChatResponse _generateMockResponse(String userMessage) {
+    final message = userMessage.toLowerCase();
+    final isBM = _currentLanguage == 'BM';
+
+    // Panadol queries
+    if (message.contains('panadol') || message.contains('paracetamol')) {
+      if (message.contains('stock') || message.contains('tinggal') || message.contains('ada')) {
+        return StaffChatResponse(
+          reply: isBM
+              ? 'Panadol 500mg masih ada dalam stok. Berikut maklumat terperinci:'
+              : 'Panadol 500mg is still in stock. Here are the details:',
+          medicationData: MedicationData(
+            medicationName: 'Panadol 500mg',
+            quantity: 45,
+            unit: 'boxes',
+            price: 8.50,
+            isLowStock: false,
+            alternatives: ['Paracetamol 500mg', 'Uphamol 500mg', 'Tylenol 500mg'],
+          ),
+        );
+      }
+      if (message.contains('harga') || message.contains('price')) {
+        return StaffChatResponse(
+          reply: isBM
+              ? 'Harga Panadol 500mg ialah RM 8.50 sekotak.'
+              : 'Panadol 500mg price is RM 8.50 per box.',
+          medicationData: MedicationData(
+            medicationName: 'Panadol 500mg',
+            quantity: 45,
+            unit: 'boxes',
+            price: 8.50,
+            isLowStock: false,
+            alternatives: [],
+          ),
+        );
+      }
+    }
+
+    // Antibiotic queries
+    if (message.contains('antibiotik') || message.contains('antibiotic')) {
+      return StaffChatResponse(
+        reply: isBM
+            ? 'Antibiotik yang tersedia di klinik:'
+            : 'Available antibiotics in the clinic:',
+        medicationData: MedicationData(
+          medicationName: 'Amoxicillin 500mg',
+          quantity: 23,
+          unit: 'boxes',
+          price: 12.00,
+          isLowStock: false,
+          alternatives: ['Amoxicillin 250mg', 'Azithromycin 500mg', 'Ciprofloxacin 500mg'],
+        ),
+      );
+    }
+
+    // Low stock queries
+    if (message.contains('stock rendah') || message.contains('low stock') || 
+        message.contains('tinggal sedikit')) {
+      return StaffChatResponse(
+        reply: isBM
+            ? 'Ubat berikut mempunyai stok rendah dan perlu ditambah:'
+            : 'The following medications have low stock and need to be restocked:',
+        medicationData: MedicationData(
+          medicationName: 'Chlorpheniramine 4mg',
+          quantity: 5,
+          unit: 'boxes',
+          price: 6.50,
+          isLowStock: true,
+          alternatives: ['Cetirizine 10mg', 'Loratadine 10mg'],
+        ),
+      );
+    }
+
+    // Alternative medicine queries
+    if (message.contains('alternatif') || message.contains('alternative') || 
+        message.contains('ganti') || message.contains('replace')) {
+      return StaffChatResponse(
+        reply: isBM
+            ? 'Berikut adalah ubat alternatif yang tersedia:'
+            : 'Here are available alternative medications:',
+        medicationData: MedicationData(
+          medicationName: 'Paracetamol 500mg',
+          quantity: 30,
+          unit: 'boxes',
+          price: 7.00,
+          isLowStock: false,
+          alternatives: ['Panadol 500mg', 'Uphamol 500mg', 'Tylenol 500mg'],
+        ),
+      );
+    }
+
+    // Fever medicine queries
+    if (message.contains('demam') || message.contains('fever')) {
+      return StaffChatResponse(
+        reply: isBM
+            ? 'Ubat demam yang tersedia:'
+            : 'Available fever medications:',
+        medicationData: MedicationData(
+          medicationName: 'Paracetamol 500mg',
+          quantity: 30,
+          unit: 'boxes',
+          price: 7.00,
+          isLowStock: false,
+          alternatives: ['Panadol 500mg', 'Ibuprofen 400mg'],
+        ),
+      );
+    }
+
+    // Quick search queries
+    if (message.contains('cari') || message.contains('search') || 
+        message.contains('carian pantas') || message.contains('quick search')) {
+      return StaffChatResponse(
+        reply: isBM
+            ? 'Sila nyatakan nama ubat yang ingin dicari. Contoh: "Panadol", "Antibiotik", atau "Ubat demam".'
+            : 'Please specify the medication name you want to search. Example: "Panadol", "Antibiotic", or "Fever medicine".',
+      );
+    }
+
+    // Generic medication search
+    if (message.contains('chlorpheniramine') || message.contains('allergy')) {
+      return StaffChatResponse(
+        reply: isBM
+            ? 'Chlorpheniramine 4mg - Stok rendah! Hanya tinggal beberapa kotak.'
+            : 'Chlorpheniramine 4mg - Low stock! Only a few boxes remaining.',
+        medicationData: MedicationData(
+          medicationName: 'Chlorpheniramine 4mg',
+          quantity: 5,
+          unit: 'boxes',
+          price: 6.50,
+          isLowStock: true,
+          alternatives: ['Cetirizine 10mg', 'Loratadine 10mg'],
+        ),
+      );
+    }
+
+    // Default response
+    return StaffChatResponse(
+      reply: isBM
+          ? 'Saya boleh membantu anda dengan:\n• Carian stock ubat\n• Harga ubat\n• Ubat alternatif\n• Amaran stock rendah\n\nCuba tanya: "Panadol stock", "Harga ubat demam", atau "Antibiotik tersedia".'
+          : 'I can help you with:\n• Medication stock search\n• Drug pricing\n• Alternative medications\n• Low stock alerts\n\nTry asking: "Panadol stock", "Fever medicine price", or "Available antibiotics".',
+    );
   }
 
   void _scrollToBottom() {
@@ -769,7 +883,7 @@ class MedicationData {
   });
 }
 
-// Add this to your api_service.dart
+// Mock response class for frontend prototype
 class StaffChatResponse {
   final String reply;
   final MedicationData? medicationData;
@@ -778,23 +892,4 @@ class StaffChatResponse {
     required this.reply,
     this.medicationData,
   });
-
-  factory StaffChatResponse.fromJson(Map<String, dynamic> json) {
-    return StaffChatResponse(
-      reply: json['reply'] ?? '',
-      medicationData: json['medication_data'] != null
-          ? MedicationData(
-              medicationName: json['medication_data']['name'] ?? '',
-              quantity: json['medication_data']['quantity'] ?? 0,
-              unit: json['medication_data']['unit'] ?? 'units',
-              price: (json['medication_data']['price'] ?? 0.0).toDouble(),
-              isLowStock: json['medication_data']['is_low_stock'] ?? false,
-              alternatives: (json['medication_data']['alternatives'] as List<dynamic>?)
-                      ?.map((e) => e.toString())
-                      .toList() ??
-                  [],
-            )
-          : null,
-    );
-  }
 }

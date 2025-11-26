@@ -4,6 +4,7 @@ import 'package:mediflow/widgets/menu_card.dart';
 import 'package:mediflow/screens/clinic_selection_screen.dart';
 import 'package:mediflow/screens/medication_screen.dart';
 import 'package:mediflow/screens/ai_assistant_staff_screen.dart';
+import 'package:mediflow/screens/login_screen.dart';
 
 class StaffMainMenu extends StatefulWidget {
   final Clinic clinic;
@@ -40,6 +41,34 @@ class _StaffMainMenuState extends State<StaffMainMenu> {
     );
   }
 
+  void _handleLogout() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Logout'),
+          content: const Text('Are you sure you want to logout?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Close dialog
+                Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(builder: (_) => const LoginScreen()),
+                  (route) => false, // Remove all previous routes
+                );
+              },
+              child: const Text('Logout'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -61,8 +90,17 @@ class _StaffMainMenuState extends State<StaffMainMenu> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        // Empty space for alignment
-                        const SizedBox(width: 40),
+                        // Logout icon
+                        IconButton(
+                          onPressed: _handleLogout,
+                          icon: const Icon(
+                            Icons.logout,
+                            color: Colors.white,
+                            size: 24,
+                          ),
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                        ),
                         // Staff indicator
                         Container(
                           padding: const EdgeInsets.symmetric(
@@ -146,7 +184,7 @@ class _StaffMainMenuState extends State<StaffMainMenu> {
                             const SizedBox(width: 12),
                             Expanded(
                               child: Text(
-                                'Start chatting with smart AI Assistant',
+                                'Try smart AI Assistant...',
                                 style: TextStyle(
                                   color: Colors.grey[400],
                                   fontSize: 16,
@@ -203,14 +241,6 @@ class _StaffMainMenuState extends State<StaffMainMenu> {
                     backgroundColor: AppTheme.lightOrange,
                     badge: 'Soon',
                     onTap: () => _showComingSoon('Clinic Analytics'),
-                  ),
-                  MenuCard(
-                    title: 'AI Assistant',
-                    subtitle: 'Smart medication assistant',
-                    icon: Icons.smart_toy,
-                    color: Colors.purple,
-                    backgroundColor: Colors.purple.shade50,
-                    onTap: _navigateToStaffAssistant,
                   ),
                 ],
               ),
