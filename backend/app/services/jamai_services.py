@@ -12,70 +12,6 @@ class JamAIService:
             token=settings.JAMAI_API_KEY
         )
 
-    def _get_clinic_tables(self, clinic_id: str) -> Dict[str, str]:
-        """Get clinic-specific table configuration"""
-        return settings.get_clinic_config(clinic_id)
-
-    async def chat_with_sop(self, clinic_id: str, user_query: str, language: str = "BM"):
-        """RAG Search for Patients (FAQ/SOP) - Clinic Specific"""
-        clinic_tables = self._get_clinic_tables(clinic_id)
-        
-        # Enhanced prompt to handle language preference
-        system_message = f"""
-        You are an AI assistant for {clinic_id} clinic. 
-        Respond in {language} (BM for Bahasa Malaysia, EN for English).
-        Provide accurate, clinic-specific information about:
-        - Operating hours
-        - Available services
-        - Vaccine schedules
-        - Treatment options
-        - Pricing information
-        
-        Keep responses concise and helpful.
-        """
-        
-        try:
-            # Using the Chat/Completions endpoint with RAG enabled
-            response = self.client.generate_chat_completions(
-                messages=[
-                    {"role": "system", "content": system_message},
-                    {"role": "user", "content": user_query}
-                ],
-                # Use clinic-specific knowledge table
-                knowledge_table_id=clinic_tables["knowledge_table_sop"],
-                rag_k=3  # Fetch top 3 relevant chunks
-            )
-            return response.choices[0].message.content
-        except Exception as e:
-            logger.error(f"Error in chat_with_sop for clinic {clinic_id}: {str(e)}")
-            fallback_message = "Maaf, sistem sedang menghadapi masalah teknikal." if language == "BM" else "Sorry, the system is experiencing technical issues."
-            return fallback_message
-
-    async def chat_with_faqs(self, clinic_id: str, user_query: str, language: str = "BM"):
-        """RAG Search for clinic-specific FAQs"""
-        clinic_tables = self._get_clinic_tables(clinic_id)
-        
-        system_message = f"""
-        You are an FAQ assistant for {clinic_id} clinic.
-        Answer common patient questions in {language}.
-        Be helpful, accurate, and clinic-specific.
-        """
-        
-        try:
-            response = self.client.generate_chat_completions(
-                messages=[
-                    {"role": "system", "content": system_message},
-                    {"role": "user", "content": user_query}
-                ],
-                knowledge_table_id=clinic_tables["knowledge_table_faqs"],
-                rag_k=5
-            )
-            return response.choices[0].message.content
-        except Exception as e:
-            logger.error(f"Error in chat_with_faqs for clinic {clinic_id}: {str(e)}")
-            fallback_message = "Maaf, tidak dapat menjawab soalan FAQ ini." if language == "BM" else "Sorry, cannot answer this FAQ question."
-            return fallback_message
-
     async def appointment_booking(self, clinic_id: str, clinic_name: str, user_input: str, language: str = "BM"):
         """
         A. Appointment Booking Action Table
@@ -83,36 +19,42 @@ class JamAIService:
         Strict Output: refined_user_message (str), booking_record (str json format)
         """
         try:
-            # Prepare input data exactly as specified
-            input_data = {
-                "user_input": user_input,
-                "clinic_name": clinic_name
-            }
-            
-            # Add row to Appointment Booking Action Table (shared across clinics)
-            completion = self.client.table.add_table_rows(
-                table_type=p.TableType.ACTION,
+            # Add row to Action Table using the working pattern from test_action.py
+            response = self.client.table.add_table_rows(
+                table_type='action',
                 request=p.RowAddRequest(
                     table_id=settings.ACTION_TABLE_TRIAGE,  # "Appointment Booking"
-                    data=[input_data],
+                    data=[{
+                        "user_input": user_input,
+                        "clinic_name": clinic_name
+                    }],
                     stream=False
                 )
             )
             
-            # Extract outputs according to strict format
-            if completion.rows and len(completion.rows) > 0:
-                row = completion.rows[0]
+            # Extract outputs using direct column access like test_action.py
+            if response.rows and len(response.rows) > 0:
+                row = response.rows[0]
                 
-                # Get refined_user_message and booking_record outputs
-                refined_message = row.columns.get("refined_user_message", {}).get("text", "")
+                # Access columns directly as in working test
+                available_time_slots = row.columns["available_time_slots"].text
+                case_type = row.columns["case_type"].text
+                recommended_time = row.columns["recommended_time"].text
+                refined_message = row.columns["refined_user_message"].text 
                 booking_record = row.columns.get("booking_record", {}).get("text", "{}")
                 
                 return {
+                    "available_time_slots": available_time_slots,
+                    "case_type": case_type,
+                    "recommended_time": recommended_time,
                     "refined_user_message": refined_message,
                     "booking_record": booking_record
                 }
                         
             return {
+                "available_time_slots": "{}",
+                "case_type": "{}",
+                "recommended_time": "{}",
                 "refined_user_message": "Appointment request processed",
                 "booking_record": "{}"
             }
@@ -121,6 +63,9 @@ class JamAIService:
             logger.error(f"Error in appointment_booking for clinic {clinic_id}: {str(e)}")
             fallback_message = "Maaf, sistem tempahan menghadapi masalah." if language == "BM" else "Sorry, appointment booking system is experiencing issues."
             return {
+                "available_time_slots": "{}",
+                "case_type": "{}",
+                "recommended_time": "{}",
                 "refined_user_message": fallback_message,
                 "booking_record": "{}"
             }
@@ -132,33 +77,30 @@ class JamAIService:
         Strict Output: response (str), source_document (str)
         """
         try:
-            # Prepare input data exactly as specified
-            input_data = {
-                "question": question,
-                "clinic_name": clinic_name
-            }
-            
-            # Add row to SOP QnA Action Table (shared across clinics)
-            completion = self.client.table.add_table_rows(
-                table_type=p.TableType.ACTION,
+            # Add row to Action Table using the working pattern from test_action.py
+            response = self.client.table.add_table_rows(
+                table_type='action',
                 request=p.RowAddRequest(
                     table_id=settings.ACTION_TABLE_SOP_QNA,  # "SOP QnA"
-                    data=[input_data],
+                    data=[{
+                        "question": question,
+                        "clinic_name": clinic_name
+                    }],
                     stream=False
                 )
             )
             
-            # Extract outputs according to strict format
-            if completion.rows and len(completion.rows) > 0:
-                row = completion.rows[0]
+            # Extract outputs using direct column access like test_action.py
+            if response.rows and len(response.rows) > 0:
+                row = response.rows[0]
                 
-                # Get response and source_document outputs
-                response = row.columns.get("response", {}).get("text", "")
-                source_document = row.columns.get("source_document", {}).get("text", "")
+                # Access columns directly as in working test
+                ai_response = row.columns["response"].text
+                source_doc = row.columns["source_doc"].text
                 
                 return {
-                    "response": response,
-                    "source_document": source_document
+                    "response": ai_response,
+                    "source_document": source_doc
                 }
                         
             return {
@@ -181,33 +123,30 @@ class JamAIService:
         Strict Output: drug_entry (str json format), medication_message (str)
         """
         try:
-            # Prepare input data exactly as specified
-            input_data = {
-                "user_input": user_input,
-                "clinic_name": clinic_name
-            }
-            
-            # Add row to Medical Lookup Action Table (shared across clinics)
-            completion = self.client.table.add_table_rows(
-                table_type=p.TableType.ACTION,
+            # Add row to Action Table using the working pattern from test_action.py
+            response = self.client.table.add_table_rows(
+                table_type='action',
                 request=p.RowAddRequest(
                     table_id=settings.ACTION_TABLE_LOOKUP,  # "Medical Lookup"
-                    data=[input_data],
+                    data=[{
+                        "user_input": user_input,
+                        "clinic_name": clinic_name
+                    }],
                     stream=False
                 )
             )
             
-            # Extract outputs according to strict format
-            if completion.rows and len(completion.rows) > 0:
-                row = completion.rows[0]
+            # Extract outputs using direct column access like test_action.py
+            if response.rows and len(response.rows) > 0:
+                row = response.rows[0]
                 
-                # Get drug_entry and medication_message outputs
-                drug_entry = row.columns.get("drug_entry", {}).get("text", "{}")
-                medication_message = row.columns.get("medication_message", {}).get("text", "")
+                # Access columns directly as in working test
+                drug_data = row.columns["drug_entry"].text
+                ai_message = row.columns["medication_message"].text
                 
                 return {
-                    "drug_entry": drug_entry,
-                    "medication_message": medication_message
+                    "drug_entry": drug_data,
+                    "medication_message": ai_message
                 }
                         
             return {
@@ -249,8 +188,6 @@ class JamAIService:
         # Return just the response for backward compatibility
         return result.get("response", "No answer found")
 
-    async def get_available_clinics(self) -> List[str]:
-        """Get list of available clinic IDs"""
-        return settings.get_all_clinic_ids()
+
 
 jamai_service = JamAIService()
