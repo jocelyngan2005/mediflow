@@ -13,29 +13,24 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
   String _selectedLanguage = 'English';
+  bool _locationEnabled = false;
 
   final List<OnboardingPage> _pages = [
     OnboardingPage(
       title: 'Welcome to Klinik Assistant',
       description: 'Your AI-powered clinic companion for instant answers and appointments',
-      icon: Icons.waving_hand_rounded,
-      color: AppTheme.primaryBlue,
-      backgroundColor: AppTheme.lightBlue,
+      imagePath: 'assets/onboarding_1.png',
     ),
     OnboardingPage(
       title: 'Choose Your Language',
       description: 'Pilih bahasa pilihan anda',
-      icon: Icons.language_rounded,
-      color: AppTheme.softPeach,
-      backgroundColor: AppTheme.lightPeach,
+      imagePath: 'assets/onboarding_2.png',
       isLanguageSelector: true,
     ),
     OnboardingPage(
       title: 'Enable Location Services',
       description: 'Find clinics near you for easier access',
-      icon: Icons.location_on_rounded,
-      color: AppTheme.softGreen,
-      backgroundColor: AppTheme.lightGreen,
+      imagePath: 'assets/onboarding_3.png',
       isLocationSelector: true,
     ),
   ];
@@ -44,24 +39,48 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
-        child: Column(
+        child: Stack(
           children: [
-            Expanded(
-              child: PageView.builder(
-                controller: _pageController,
-                onPageChanged: (index) {
-                  setState(() {
-                    _currentPage = index;
-                  });
-                },
-                itemCount: _pages.length,
-                itemBuilder: (context, index) {
-                  return _buildPage(_pages[index]);
-                },
-              ),
+            Column(
+              children: [
+                Expanded(
+                  child: PageView.builder(
+                    controller: _pageController,
+                    onPageChanged: (index) {
+                      setState(() {
+                        _currentPage = index;
+                      });
+                    },
+                    itemCount: _pages.length,
+                    itemBuilder: (context, index) {
+                      return _buildPage(_pages[index]);
+                    },
+                  ),
+                ),
+                _buildBottomSection(),
+              ],
             ),
-            _buildIndicators(),
-            _buildBottomSection(),
+            // Skip button at top right
+            if (_currentPage < _pages.length - 1)
+              Positioned(
+                top: 16,
+                right: 24,
+                child: TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pushReplacement(
+                      MaterialPageRoute(builder: (_) => const LoginScreen()),
+                    );
+                  },
+                  style: TextButton.styleFrom(
+                    foregroundColor: AppTheme.greyText,
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  ),
+                  child: const Text(
+                    'Skip',
+                    style: TextStyle(fontSize: 16),
+                  ),
+                ),
+              ),
           ],
         ),
       ),
@@ -72,43 +91,42 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     return Padding(
       padding: const EdgeInsets.all(40.0),
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 200,
-            height: 200,
-            decoration: BoxDecoration(
-              color: page.backgroundColor,
-              borderRadius: BorderRadius.circular(40),
-            ),
-            child: Icon(
-              page.icon,
-              size: 100,
-              color: page.color,
+          const Spacer(flex: 2),
+          // Image without background container
+          SizedBox(
+            width: 320,
+            height: 320,
+            child: Image.asset(
+              page.imagePath,
+              fit: BoxFit.contain,
             ),
           ),
-          const SizedBox(height: 50),
+          const Spacer(flex: 1),
+          // Text content aligned to left
           Text(
             page.title,
             style: Theme.of(context).textTheme.displayMedium,
-            textAlign: TextAlign.center,
+            textAlign: TextAlign.left,
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 12),
           Text(
             page.description,
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                   color: AppTheme.greyText,
                 ),
-            textAlign: TextAlign.center,
+            textAlign: TextAlign.left,
           ),
           if (page.isLanguageSelector) ...[
-            const SizedBox(height: 40),
+            const SizedBox(height: 32),
             _buildLanguageSelector(),
           ],
           if (page.isLocationSelector) ...[
-            const SizedBox(height: 40),
+            const SizedBox(height: 32),
             _buildLocationButton(),
           ],
+          const Spacer(flex: 1),
         ],
       ),
     );
@@ -163,84 +181,118 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   Widget _buildLocationButton() {
-    return ElevatedButton.icon(
-      onPressed: () {
-        // Enable location services
+    return InkWell(
+      onTap: () {
+        setState(() {
+          _locationEnabled = !_locationEnabled;
+        });
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Location services enabled')),
+          SnackBar(
+            content: Text(_locationEnabled 
+              ? 'Location services enabled' 
+              : 'Location services disabled'),
+          ),
         );
       },
-      icon: const Icon(Icons.my_location),
-      label: const Text('Enable Location'),
-      style: ElevatedButton.styleFrom(
-        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-      ),
-    );
-  }
-
-  Widget _buildIndicators() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: List.generate(
-        _pages.length,
-        (index) => Container(
-          margin: const EdgeInsets.symmetric(horizontal: 4),
-          width: _currentPage == index ? 32 : 8,
-          height: 8,
-          decoration: BoxDecoration(
-            color: _currentPage == index
-                ? AppTheme.primaryBlue
-                : AppTheme.primaryBlue.withOpacity(0.3),
-            borderRadius: BorderRadius.circular(4),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+        decoration: BoxDecoration(
+          color: _locationEnabled ? AppTheme.primaryBlue : Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: _locationEnabled ? AppTheme.primaryBlue : Colors.grey.shade300,
+            width: 2,
           ),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              Icons.my_location,
+              color: _locationEnabled ? Colors.white : AppTheme.darkText,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                'Enable Location',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: _locationEnabled ? Colors.white : AppTheme.darkText,
+                ),
+              ),
+            ),
+            if (_locationEnabled)
+              const Icon(Icons.check_circle, color: Colors.white),
+          ],
         ),
       ),
     );
   }
 
   Widget _buildBottomSection() {
+    final isLastPage = _currentPage == _pages.length - 1;
+    final indicatorColor = isLastPage ? AppTheme.primaryBlue : AppTheme.darkText;
+    final buttonColor = isLastPage ? AppTheme.primaryBlue : AppTheme.darkText;
+
     return Padding(
       padding: const EdgeInsets.all(24.0),
-      child: Column(
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          if (_currentPage < _pages.length - 1)
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () {
-                      Navigator.of(context).pushReplacement(
-                        MaterialPageRoute(builder: (_) => const LoginScreen()),
-                      );
-                    },
-                    child: const Text('Skip'),
-                  ),
+          // Progress indicators at bottom left
+          Row(
+            children: List.generate(
+              _pages.length,
+              (index) => Container(
+                margin: const EdgeInsets.only(right: 8),
+                width: _currentPage == index ? 32 : 8,
+                height: 8,
+                decoration: BoxDecoration(
+                  color: _currentPage == index
+                      ? indicatorColor
+                      : indicatorColor.withOpacity(0.3),
+                  borderRadius: BorderRadius.circular(4),
                 ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () {
-                      _pageController.nextPage(
-                        duration: const Duration(milliseconds: 300),
-                        curve: Curves.easeInOut,
-                      );
-                    },
-                    child: const Text('Next'),
-                  ),
-                ),
-              ],
-            ),
-          if (_currentPage == _pages.length - 1)
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () {
-                  Navigator.of(context).pushReplacement(
-                    MaterialPageRoute(builder: (_) => const LoginScreen()),
-                  );
-                },
-                child: const Text('Get Started'),
               ),
+            ),
+          ),
+          // Next button or Get Started button
+          if (_currentPage < _pages.length - 1)
+            // Forward arrow in circle
+            GestureDetector(
+              onTap: () {
+                _pageController.nextPage(
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.easeInOut,
+                );
+              },
+              child: Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  color: buttonColor,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.arrow_forward,
+                  color: Colors.white,
+                  size: 24,
+                ),
+              ),
+            )
+          else
+            // Get Started button with fit content width
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(builder: (_) => const LoginScreen()),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: buttonColor,
+                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+              ),
+              child: const Text('Get Started'),
             ),
         ],
       ),
@@ -257,18 +309,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 class OnboardingPage {
   final String title;
   final String description;
-  final IconData icon;
-  final Color color;
-  final Color backgroundColor;
+  final String imagePath;
   final bool isLanguageSelector;
   final bool isLocationSelector;
 
   OnboardingPage({
     required this.title,
     required this.description,
-    required this.icon,
-    required this.color,
-    required this.backgroundColor,
+    required this.imagePath,
     this.isLanguageSelector = false,
     this.isLocationSelector = false,
   });

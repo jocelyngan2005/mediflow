@@ -70,28 +70,17 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Container(
-                    padding: const EdgeInsets.all(24),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(30),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppTheme.primaryBlue.withOpacity(0.2),
-                          blurRadius: 20,
-                          offset: const Offset(0, 10),
-                        ),
-                      ],
-                    ),
-                    child: const Icon(
-                      Icons.medical_services_rounded,
-                      size: 80,
-                      color: AppTheme.primaryBlue,
+                  SizedBox(
+                    width: 250,
+                    height: 250,
+                    child: Image.asset(
+                      'assets/splashscreen.png',
+                      fit: BoxFit.contain,
                     ),
                   ),
                   const SizedBox(height: 30),
                   Text(
-                    'ClinicFlow+',
+                    'MediFlow',
                     style: Theme.of(context).textTheme.displayLarge?.copyWith(
                           color: AppTheme.primaryBlue,
                           fontWeight: FontWeight.bold,
