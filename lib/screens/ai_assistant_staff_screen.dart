@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:mediflow/theme/app_theme.dart';
 import 'package:mediflow/screens/clinic_selection_screen.dart';
 import 'package:mediflow/services/api_service.dart';
+import 'dart:convert';
 
 class StaffAssistantScreen extends StatefulWidget {
   final Clinic clinic;
@@ -104,11 +105,37 @@ class _StaffAssistantScreenState extends State<StaffAssistantScreen> with Ticker
 
       setState(() {
         if (response.success && response.data != null) {
+          // Parse drug_entry JSON if available
+          MedicationData? medData;
+          if (response.data!['drug_entry'] != null && response.data!['drug_entry'] != '{}') {
+            try {
+              Map<String, dynamic> drugJson;
+              
+              if (response.data!['drug_entry'] is String) {
+                String drugEntryStr = response.data!['drug_entry'];
+                print('Drug entry string: $drugEntryStr');
+                drugJson = Map<String, dynamic>.from(json.decode(drugEntryStr));
+              } else {
+                drugJson = Map<String, dynamic>.from(response.data!['drug_entry']);
+              }
+              
+              print('Parsed drug JSON: $drugJson');
+              medData = MedicationData.fromDrugEntry(drugJson);
+              print('Created MedicationData: ${medData.medicationName}');
+            } catch (e) {
+              print('Error parsing drug_entry: $e');
+              print('Raw drug_entry: ${response.data!['drug_entry']}');
+            }
+          } else {
+            print('No drug_entry found or it is empty/null');
+            print('Response data keys: ${response.data!.keys.toList()}');
+          }
+          
           _messages.add(ChatMessage(
-            text: response.data!['reply'] ?? 'No response',
+            text: response.data!['medication_message'] ?? response.data!['reply'] ?? 'No response',
             isUser: false,
             timestamp: DateTime.now(),
-            medicationData: response.data!['medications'],
+            medicationData: medData,
           ));
         } else {
           // Show error message
@@ -482,49 +509,57 @@ class _StaffAssistantScreenState extends State<StaffAssistantScreen> with Ticker
               ),
             ),
           Flexible(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: BoxDecoration(
-                color: message.isUser
-                    ? AppTheme.primaryBlue
-                    : Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 4,
-                    offset: const Offset(0, 2),
+            child: Column(
+              crossAxisAlignment: message.isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: message.isUser
+                        ? AppTheme.primaryBlue
+                        : Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        message.text,
+                        style: TextStyle(
+                          color: message.isUser ? Colors.white : AppTheme.darkText,
+                          fontSize: 14,
+                          height: 1.4,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '${message.timestamp.hour}:${message.timestamp.minute.toString().padLeft(2, '0')}',
+                        style: TextStyle(
+                          color: message.isUser
+                              ? Colors.white.withOpacity(0.7)
+                              : AppTheme.greyText,
+                          fontSize: 10,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                // Medication data card displayed separately below the message
+                if (!message.isUser && message.medicationData != null) ...[
+                  const SizedBox(height: 8),
+                  Container(
+                    width: double.infinity,
+                    child: _buildMedicationCard(message.medicationData!),
                   ),
                 ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    message.text,
-                    style: TextStyle(
-                      color: message.isUser ? Colors.white : AppTheme.darkText,
-                      fontSize: 14,
-                      height: 1.4,
-                    ),
-                  ),
-                  // Medication data card
-                  if (message.medicationData != null) ...[
-                    const SizedBox(height: 12),
-                    _buildMedicationCard(message.medicationData!),
-                  ],
-                  const SizedBox(height: 4),
-                  Text(
-                    '${message.timestamp.hour}:${message.timestamp.minute.toString().padLeft(2, '0')}',
-                    style: TextStyle(
-                      color: message.isUser
-                          ? Colors.white.withOpacity(0.7)
-                          : AppTheme.greyText,
-                      fontSize: 10,
-                    ),
-                  ),
-                ],
-              ),
+              ],
             ),
           ),
         ],
@@ -534,29 +569,63 @@ class _StaffAssistantScreenState extends State<StaffAssistantScreen> with Ticker
 
   Widget _buildMedicationCard(MedicationData data) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppTheme.background,
-        borderRadius: BorderRadius.circular(12),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: data.isLowStock ? Colors.red.shade200 : AppTheme.lightBlue,
-          width: 1.5,
+          color: data.isLowStock ? Colors.red.shade300 : AppTheme.primaryBlue.withOpacity(0.3),
+          width: 2,
         ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Medication name with low stock badge
+          // Header with medication icon and name
           Row(
             children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppTheme.lightBlue,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.medication,
+                  color: AppTheme.primaryBlue,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
               Expanded(
-                child: Text(
-                  data.medicationName,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.darkText,
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      data.medicationName,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.darkText,
+                      ),
+                    ),
+                    if (data.genericName.isNotEmpty && data.genericName != data.medicationName)
+                      Text(
+                        '${data.genericName}',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: AppTheme.greyText,
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                  ],
                 ),
               ),
               if (data.isLowStock)
@@ -584,91 +653,133 @@ class _StaffAssistantScreenState extends State<StaffAssistantScreen> with Ticker
                 ),
             ],
           ),
-          const SizedBox(height: 8),
-          const Divider(height: 1),
-          const SizedBox(height: 8),
           
-          // Stock quantity
-          _buildInfoRow(
-            Icons.inventory_2,
-            _currentLanguage == 'BM' ? 'Kuantiti' : 'Quantity',
-            '${data.quantity} ${data.unit}',
-            data.isLowStock ? Colors.red.shade700 : AppTheme.primaryBlue,
-          ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 16),
           
-          // Price
-          _buildInfoRow(
-            Icons.attach_money,
-            _currentLanguage == 'BM' ? 'Harga' : 'Price',
-            'RM ${data.price.toStringAsFixed(2)}',
-            AppTheme.softOrange,
-          ),
-          
-          // Alternatives if available
-          if (data.alternatives.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            const Divider(height: 1),
-            const SizedBox(height: 8),
-            Row(
+          // Drug information grid
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: AppTheme.background.withOpacity(0.5),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Column(
               children: [
-                Icon(Icons.swap_horiz, size: 14, color: AppTheme.greyText),
-                const SizedBox(width: 6),
-                Text(
-                  _currentLanguage == 'BM' ? 'Alternatif:' : 'Alternatives:',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: AppTheme.greyText,
-                  ),
+                // First row: Category and Location
+                Row(
+                  children: [
+                    if (data.category.isNotEmpty) ...[
+                      Expanded(
+                        child: _buildInfoRow(
+                          Icons.category,
+                          _currentLanguage == 'BM' ? 'Kategori' : 'Category',
+                          data.category,
+                          AppTheme.primaryBlue,
+                        ),
+                      ),
+                    ],
+                    if (data.location.isNotEmpty) ...[
+                      if (data.category.isNotEmpty) const SizedBox(width: 16),
+                      Expanded(
+                        child: _buildInfoRow(
+                          Icons.place,
+                          _currentLanguage == 'BM' ? 'Lokasi' : 'Location',
+                          data.location,
+                          AppTheme.greyText,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+                
+                if ((data.category.isNotEmpty || data.location.isNotEmpty)) 
+                  const SizedBox(height: 12),
+                
+                // Second row: Stock and Price
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildInfoRow(
+                        Icons.inventory_2,
+                        _currentLanguage == 'BM' ? 'Stock' : 'Stock',
+                        '${data.quantity} ${data.unit}',
+                        data.isLowStock ? Colors.red.shade700 : AppTheme.primaryBlue,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: _buildInfoRow(
+                        Icons.attach_money,
+                        _currentLanguage == 'BM' ? 'Harga' : 'Price',
+                        'RM ${data.price.toStringAsFixed(2)}',
+                        AppTheme.softOrange,
+                      ),
+                    ),
+                  ],
+                ),
+                
+                const SizedBox(height: 12),
+                
+                // Third row: Min Stock and Expiry
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildInfoRow(
+                        Icons.warning_outlined,
+                        _currentLanguage == 'BM' ? 'Min Stock' : 'Min Stock',
+                        '${data.minStock} ${data.unit}',
+                        Colors.orange.shade600,
+                      ),
+                    ),
+                    if (data.expiryDate.isNotEmpty) ...[
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: _buildInfoRow(
+                          Icons.schedule,
+                          _currentLanguage == 'BM' ? 'Luput' : 'Expiry',
+                          data.expiryDate,
+                          AppTheme.greyText,
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
               ],
             ),
-            const SizedBox(height: 6),
-            Wrap(
-              spacing: 6,
-              runSpacing: 6,
-              children: data.alternatives.map((alt) => Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: AppTheme.lightBlue,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  alt,
-                  style: const TextStyle(
-                    fontSize: 11,
-                    color: AppTheme.primaryBlue,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              )).toList(),
-            ),
-          ],
+          ),
         ],
       ),
     );
   }
 
   Widget _buildInfoRow(IconData icon, String label, String value, Color color) {
-    return Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: 14, color: color),
-        const SizedBox(width: 6),
-        Text(
-          '$label: ',
-          style: const TextStyle(
-            fontSize: 12,
-            color: AppTheme.greyText,
-          ),
+        Row(
+          children: [
+            Icon(icon, size: 12, color: color.withOpacity(0.7)),
+            const SizedBox(width: 4),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w500,
+                color: AppTheme.greyText,
+              ),
+            ),
+          ],
         ),
+        const SizedBox(height: 2),
         Text(
           value,
           style: TextStyle(
-            fontSize: 12,
+            fontSize: 13,
             fontWeight: FontWeight.w600,
             color: color,
           ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
         ),
       ],
     );
@@ -753,48 +864,50 @@ class ChatMessage {
 
 class MedicationData {
   final String medicationName;
+  final String genericName;
+  final String category;
   final int quantity;
   final String unit;
   final double price;
   final bool isLowStock;
-  final List<String> alternatives;
+  final String expiryDate;
+  final String location;
+  final String clinic;
+  final int minStock;
 
   MedicationData({
     required this.medicationName,
+    required this.genericName,
+    required this.category,
     required this.quantity,
     required this.unit,
     required this.price,
     required this.isLowStock,
-    required this.alternatives,
-  });
-}
-
-// Add this to your api_service.dart
-class StaffChatResponse {
-  final String reply;
-  final MedicationData? medicationData;
-
-  StaffChatResponse({
-    required this.reply,
-    this.medicationData,
+    required this.expiryDate,
+    required this.location,
+    required this.clinic,
+    required this.minStock,
   });
 
-  factory StaffChatResponse.fromJson(Map<String, dynamic> json) {
-    return StaffChatResponse(
-      reply: json['reply'] ?? '',
-      medicationData: json['medication_data'] != null
-          ? MedicationData(
-              medicationName: json['medication_data']['name'] ?? '',
-              quantity: json['medication_data']['quantity'] ?? 0,
-              unit: json['medication_data']['unit'] ?? 'units',
-              price: (json['medication_data']['price'] ?? 0.0).toDouble(),
-              isLowStock: json['medication_data']['is_low_stock'] ?? false,
-              alternatives: (json['medication_data']['alternatives'] as List<dynamic>?)
-                      ?.map((e) => e.toString())
-                      .toList() ??
-                  [],
-            )
-          : null,
+  factory MedicationData.fromDrugEntry(Map<String, dynamic> drugEntry) {
+    final quantity = int.tryParse(drugEntry['stock_quantity']?.toString() ?? '0') ?? 0;
+    final minStock = int.tryParse(drugEntry['min_stock']?.toString() ?? '0') ?? 0;
+    final price = double.tryParse(drugEntry['price']?.toString() ?? '0.0') ?? 0.0;
+    
+    return MedicationData(
+      medicationName: drugEntry['common_name'] ?? drugEntry['generic_name'] ?? 'Unknown',
+      genericName: drugEntry['generic_name'] ?? '',
+      category: drugEntry['category'] ?? '',
+      quantity: quantity,
+      unit: drugEntry['unit'] ?? 'units',
+      price: price,
+      isLowStock: quantity <= minStock,
+      expiryDate: drugEntry['expiry_date'] ?? '',
+      location: drugEntry['location'] ?? '',
+      clinic: drugEntry['clinic'] ?? '',
+      minStock: minStock,
     );
   }
 }
+
+// Removed - no longer needed as we use Map<String, dynamic> directly

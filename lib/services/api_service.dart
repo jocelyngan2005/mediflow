@@ -202,13 +202,12 @@ class ApiService {
   }) async {
     try {
       final response = await http.post(
-        Uri.parse('$baseUrl/staff/medication-lookup'),
+        Uri.parse('$baseUrl/staff/chat'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'clinic_id': clinicId,
-          'query': message,
+          'message': message,
           'language': language,
-          'secret_code': staffSecretCode,
         }),
       );
 

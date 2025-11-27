@@ -15,6 +15,11 @@ def get_clinic_name_from_id(clinic_id: str, clinic_name: str = None) -> str:
     
     # Default mapping - should match the one in patients.py
     clinic_name_mapping = {
+        'clinic_001': 'Klinik Bandar Utama',
+        'clinic_002': 'Klinik Dr. Ahmad',
+        'clinic_003': 'Pusat Kesihatan Setapak',
+        'clinic_004': 'Klinik Famili Wangsa Maju',
+        # Legacy mappings for backward compatibility
         'klinik-bandar-utama': 'Klinik Bandar Utama',
         'klinik-sri-hartamas': 'Klinik Sri Hartamas', 
         'klinik-desa-jaya': 'Pusat Kesihatan Setapak',
@@ -112,6 +117,33 @@ async def get_clinic_status(clinic_id: str):
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error checking clinic status: {str(e)}")
+
+# Simple chat endpoint for staff assistant
+@router.post("/chat")
+async def staff_chat_message(request: dict):
+    """
+    Simple chat endpoint for staff assistant medication lookup
+    No authentication for hackathon demo
+    """
+    try:
+        clinic_id = request.get('clinic_id', '')
+        message = request.get('message', '')
+        
+        resolved_clinic_name = get_clinic_name_from_id(clinic_id)
+        lookup_result = await jamai_service.medication_lookup_staff(
+            clinic_id=clinic_id,
+            clinic_name=resolved_clinic_name,
+            user_input=message
+        )
+        return {
+            "clinic_id": clinic_id,
+            "clinic_name": resolved_clinic_name,
+            "drug_entry": lookup_result.get("drug_entry", "{}"),
+            "medication_message": lookup_result.get("medication_message", "No information found"),
+            "action_table_used": "medication_lookup"
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error processing staff chat: {str(e)}")
 
 # Admin endpoints for clinic management (future expansion)
 @router.post("/medication-query", dependencies=[Depends(verify_staff_token)])

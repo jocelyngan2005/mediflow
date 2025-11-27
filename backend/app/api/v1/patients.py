@@ -38,7 +38,7 @@ async def get_available_clinics():
     """
     return [
         {
-            "clinic_id": "klinik-bandar-utama",
+            "clinic_id": "clinic_001",
             "name": "Klinik Bandar Utama",
             "address": "Bandar Utama, Petaling Jaya",
             "phone": "+603-7725-0123",
@@ -49,7 +49,7 @@ async def get_available_clinics():
             "is_active": True
         },
         {
-            "clinic_id": "klinik-sri-hartamas", 
+            "clinic_id": "clinic_002", 
             "name": "Klinik Sri Hartamas",
             "address": "Sri Hartamas, Kuala Lumpur",
             "phone": "+603-6201-9876",

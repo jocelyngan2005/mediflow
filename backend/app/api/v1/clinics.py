@@ -18,7 +18,7 @@ async def get_all_clinics():
         # Return predefined clinics - all use shared JamAI tables
         clinics = [
             ClinicResponse(
-                clinic_id="klinik-bandar-utama",
+                clinic_id="clinic_001",
                 name="Klinik Bandar Utama",
                 address="Bandar Utama, Petaling Jaya, Selangor",
                 phone="+60-3-7725-0123",
@@ -29,7 +29,7 @@ async def get_all_clinics():
                 is_active=True
             ),
             ClinicResponse(
-                clinic_id="klinik-sri-hartamas",
+                clinic_id="clinic_002",
                 name="Klinik Sri Hartamas",
                 address="Sri Hartamas, Kuala Lumpur",
                 phone="+60-3-6201-9876",
@@ -40,9 +40,9 @@ async def get_all_clinics():
                 is_active=True
             ),
             ClinicResponse(
-                clinic_id="pusat-kesihatan-setapak",
-                name="Pusat Kesihatan Setapak",
-                address="Setapak, Kuala Lumpur",
+                clinic_id="clinic_003",
+                name="Klinik Desa Jaya",
+                address="Desa Jaya, Kuala Lumpur",
                 phone="+60-3-4142-5678",
                 email="info@pksetapak.gov.my",
                 operating_hours="Mon-Sun: 8:00AM-12:00AM (24 hours emergency)",
