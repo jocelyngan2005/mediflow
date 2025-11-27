@@ -131,7 +131,6 @@ async def staff_chat_message(request: dict):
         
         resolved_clinic_name = get_clinic_name_from_id(clinic_id)
         lookup_result = await jamai_service.medication_lookup_staff(
-            clinic_id=clinic_id,
             clinic_name=resolved_clinic_name,
             user_input=message
         )

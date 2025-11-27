@@ -113,7 +113,12 @@ class _StaffAssistantScreenState extends State<StaffAssistantScreen> with Ticker
               
               if (response.data!['drug_entry'] is String) {
                 String drugEntryStr = response.data!['drug_entry'];
-                print('Drug entry string: $drugEntryStr');
+                print('Raw drug entry string: $drugEntryStr');
+                
+                // Clean the string - remove [@0] or similar suffixes
+                drugEntryStr = drugEntryStr.replaceAll(RegExp(r'\s*\[@\d+\]$'), '').trim();
+                print('Cleaned drug entry string: $drugEntryStr');
+                
                 drugJson = Map<String, dynamic>.from(json.decode(drugEntryStr));
               } else {
                 drugJson = Map<String, dynamic>.from(response.data!['drug_entry']);
