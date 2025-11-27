@@ -624,10 +624,13 @@ class _StaffAppointmentBookingsScreenState extends State<StaffAppointmentBooking
                   onPressed: () {
                     _showEditStatusDialog(appointment);
                   },
-                  icon: const Icon(Icons.edit, size: 16),
-                  label: const Text('Update Status'),
+                  icon: const Icon(Icons.edit, size: 14),
+                  label: const Text('Update Status', style: TextStyle(fontSize: 12)),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: AppTheme.primaryBlue,
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                    minimumSize: const Size(0, 36),
+                    textStyle: const TextStyle(fontSize: 12),
                   ),
                 ),
               ),
@@ -642,11 +645,13 @@ class _StaffAppointmentBookingsScreenState extends State<StaffAppointmentBooking
                       ),
                     );
                   },
-                  icon: const Icon(Icons.phone, size: 16),
-                  label: const Text('Call Patient'),
+                  icon: const Icon(Icons.phone, size: 14),
+                  label: const Text('Call Patient', style: TextStyle(fontSize: 12)),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppTheme.primaryBlue,
                     foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                    minimumSize: const Size(0, 36),
                   ),
                 ),
               ),

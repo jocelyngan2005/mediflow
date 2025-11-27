@@ -194,7 +194,7 @@ class _LoginScreenState extends State<LoginScreen> {
         children: [
           Text(
             "Don't have an account? ",
-            style: Theme.of(context).textTheme.bodyMedium,
+            style: Theme.of(context).textTheme.bodySmall,
           ),
           GestureDetector(
             onTap: () {
@@ -204,7 +204,7 @@ class _LoginScreenState extends State<LoginScreen> {
             },
             child: Text(
               'Sign Up here',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: AppTheme.primaryBlue,
                 fontWeight: FontWeight.bold,
               ),
