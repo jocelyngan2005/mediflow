@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:mediflow/theme/app_theme.dart';
 import 'package:mediflow/screens/clinic_selection_screen.dart';
+import 'package:mediflow/services/api_service.dart';
+import 'dart:convert';
 
 class AppointmentsScreen extends StatefulWidget {
   final Clinic clinic;
@@ -11,17 +13,19 @@ class AppointmentsScreen extends StatefulWidget {
   State<AppointmentsScreen> createState() => _AppointmentsScreenState();
 }
 
-class _AppointmentsScreenState extends State<AppointmentsScreen> {
+class _AppointmentsScreenState extends State<AppointmentsScreen> with TickerProviderStateMixin {
   int _currentStep = 0;
   final TextEditingController _symptomsController = TextEditingController();
-  String? _selectedUrgency;
   DateTime? _selectedDate;
   String? _selectedTimeSlot;
   final List<String> _selectedSymptoms = [];
   
-  // Mock AI suggested appointment time
-  final DateTime _aiSuggestedDate = DateTime.now().add(const Duration(days: 1));
-  final String _aiSuggestedTime = '10:00 AM';
+  // Backend response data
+  List<Map<String, dynamic>> _availableTimeSlots = [];
+  Map<String, dynamic>? _caseType;
+  Map<String, dynamic>? _recommendedTime;
+  String? _refinedUserMessage;
+  bool _isLoadingAIResponse = false;
 
   // Common symptoms
   final List<String> _commonSymptoms = [
@@ -37,6 +41,12 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
     'Stomach pain',
   ];
 
+  @override
+  void initState() {
+    super.initState();
+    // Initialize with basic slots to ensure we always have something to show
+    _initializeDefaultSlots();
+  }
 
   @override
   void dispose() {
@@ -44,8 +54,347 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
     super.dispose();
   }
 
+  void _initializeDefaultSlots() {
+    // Pre-populate with default slots so users always see options
+    if (_availableTimeSlots.isEmpty) {
+      print('Initializing default slots...');
+      
+      // Try regular generation first
+      _availableTimeSlots = _generateTimeSlots();
+      print('Regular generation: ${_availableTimeSlots.length} slots');
+      
+      // If empty, try fallback
+      if (_availableTimeSlots.isEmpty) {
+        _availableTimeSlots = _generateFallbackTimeSlots();
+        print('Fallback generation: ${_availableTimeSlots.length} slots');
+      }
+      
+      // If still empty, use basic fallback
+      if (_availableTimeSlots.isEmpty) {
+        _availableTimeSlots = _generateBasicFallbackSlots();
+        print('Basic fallback generation: ${_availableTimeSlots.length} slots');
+      }
+      
+      print('Final initialized slots: ${_availableTimeSlots.length}');
+      
+      // Debug: Print first few slots
+      for (int i = 0; i < _availableTimeSlots.length && i < 3; i++) {
+        print('Slot $i: ${_availableTimeSlots[i]}');
+      }
+    }
+  }
 
-  void _nextStep() {
+  Future<void> _callAppointmentBookingAPI() async {
+    setState(() {
+      _isLoadingAIResponse = true;
+    });
+
+    try {
+      String userInput = _formatSymptomsForAPI();
+      
+      ApiResponse<ChatResponse> response = await ApiService.bookAppointment(
+        clinicId: widget.clinic.clinicId,
+        message: userInput,
+        language: 'EN',
+      );
+
+      if (response.success && response.data != null) {
+        _parseBackendResponse(response.data!);
+      } else {
+        _setFallbackData();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('API Error: ${response.error ?? "Unknown error"}')),
+          );
+        }
+      }
+    } catch (e) {
+      _setFallbackData();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Network Error: $e')),
+        );
+      }
+    } finally {
+      setState(() {
+        _isLoadingAIResponse = false;
+      });
+    }
+  }
+
+  String _formatSymptomsForAPI() {
+    List<String> allSymptoms = List.from(_selectedSymptoms);
+    
+    if (_selectedSymptoms.contains('Other') && _symptomsController.text.trim().isNotEmpty) {
+      allSymptoms.remove('Other');
+      allSymptoms.add(_symptomsController.text.trim());
+    }
+    
+    return 'Patient symptoms: ${allSymptoms.join(", ")}';
+  }
+
+  void _parseBackendResponse(ChatResponse response) {
+    try {
+      Map<String, dynamic> data = json.decode(response.reply);
+      
+      if (data['available_time_slots'] is String) {
+        _availableTimeSlots = List<Map<String, dynamic>>.from(
+          json.decode(data['available_time_slots'])
+        );
+      }
+      
+      if (data['case_type'] is String) {
+        _caseType = json.decode(data['case_type']);
+      }
+      
+      if (data['recommended_time'] is String) {
+        _recommendedTime = json.decode(data['recommended_time']);
+      }
+      
+      _refinedUserMessage = data['refined_user_message'];
+      
+      // Note: booking_record from sourceDocument can be used if needed in the future
+      
+    } catch (e) {
+      print('Error parsing backend response: $e');
+      _setFallbackData();
+    }
+  }
+
+  void _setFallbackData() {
+    String caseTypeValue = _determineCaseType();
+    
+    _caseType = {
+      "case_type": caseTypeValue,
+      "booking_needed": true,
+      "response_template": _getResponseTemplate(caseTypeValue)
+    };
+    
+    print('Setting fallback data...');
+    
+    // Always ensure we have time slots, prefer generated slots but use fallback if needed
+    List<Map<String, dynamic>> generatedSlots = _generateTimeSlots();
+    print('Generated slots count: ${generatedSlots.length}');
+    
+    if (generatedSlots.isNotEmpty) {
+      _availableTimeSlots = generatedSlots;
+      print('Using generated slots');
+    } else {
+      _availableTimeSlots = _generateFallbackTimeSlots();
+      print('Using fallback slots, count: ${_availableTimeSlots.length}');
+    }
+    
+    // If still empty, force create basic fallback slots
+    if (_availableTimeSlots.isEmpty) {
+      _availableTimeSlots = _generateBasicFallbackSlots();
+      print('Using basic fallback slots, count: ${_availableTimeSlots.length}');
+    }
+    
+    print('Final available slots count: ${_availableTimeSlots.length}');
+    
+    if (caseTypeValue == 'EMERGENCY' || caseTypeValue == 'URGENT') {
+      _recommendedTime = {
+        "slot_found": true,
+        "display_date": _formatDate(DateTime.now().add(const Duration(days: 1))),
+        "display_time": "09:00",
+        "doctor": "Dr. Sarah Lee",
+        "clinic": widget.clinic.name
+      };
+    } else {
+      _recommendedTime = {
+        "slot_found": true,
+        "display_date": _formatDate(DateTime.now().add(const Duration(days: 3))),
+        "display_time": "14:00",
+        "doctor": "Dr. Ahmad Rahman",
+        "clinic": widget.clinic.name
+      };
+    }
+    
+    _refinedUserMessage = "We recommend scheduling an appointment to address your symptoms.";
+  }
+
+  String _determineCaseType() {
+    if (_selectedSymptoms.any((symptom) => 
+        ['Nausea', 'Dizziness', 'Severe pain'].contains(symptom))) {
+      return 'EMERGENCY';
+    } else if (_selectedSymptoms.any((symptom) => 
+        ['Fever', 'Headache'].contains(symptom))) {
+      return 'URGENT';
+    } else if (_selectedSymptoms.length > 2) {
+      return 'ROUTINE';
+    } else {
+      return 'NON_URGENT';
+    }
+  }
+
+  String _getResponseTemplate(String caseType) {
+    switch (caseType) {
+      case 'EMERGENCY':
+        return 'Your symptoms indicate a potential emergency. Please seek immediate medical attention.';
+      case 'URGENT':
+        return 'Your symptoms require prompt medical attention. We recommend scheduling an appointment within 24-48 hours.';
+      case 'ROUTINE':
+        return 'Your symptoms can be addressed during a routine appointment. Please schedule at your convenience.';
+      case 'NON_URGENT':
+        return 'Your symptoms are mild and can be monitored. Consider scheduling a routine check-up.';
+      default:
+        return 'Please consult with a healthcare provider about your symptoms.';
+    }
+  }
+
+  List<Map<String, dynamic>> _generateTimeSlots() {
+    List<Map<String, dynamic>> slots = [];
+    DateTime startDate = DateTime.now().add(const Duration(days: 1)); // Tomorrow
+    
+    // Debug: Print current date info
+    print('Current date: ${DateTime.now()}');
+    print('Start date: $startDate, weekday: ${startDate.weekday}');
+    
+    for (int day = 0; day < 7; day++) {
+      DateTime date = startDate.add(Duration(days: day));
+      print('Checking date: $date, weekday: ${date.weekday}');
+      
+      // Include weekdays (Monday=1 to Friday=5) and Saturday=6 for more availability  
+      if (date.weekday <= 6) {
+        print('Adding slots for: $date');
+        slots.addAll([
+          {
+            "date": _formatDate(date),
+            "time": "09:00",
+            "doctor": "Dr. Sarah Lee",
+            "clinic": widget.clinic.name
+          },
+          {
+            "date": _formatDate(date), 
+            "time": "10:30",
+            "doctor": "Dr. Ahmad Rahman",
+            "clinic": widget.clinic.name
+          },
+          {
+            "date": _formatDate(date),
+            "time": "14:00",
+            "doctor": "Dr. Lisa Wong",
+            "clinic": widget.clinic.name
+          },
+          {
+            "date": _formatDate(date),
+            "time": "16:30", 
+            "doctor": "Dr. Sarah Lee",
+            "clinic": widget.clinic.name
+          }
+        ]);
+      }
+    }
+    
+    print('Generated ${slots.length} slots total');
+    return slots;
+  }
+
+  String _formatDate(DateTime date) {
+    return '${date.day.toString().padLeft(2, '0')}-${date.month.toString().padLeft(2, '0')}-${date.year}';
+  }
+
+  bool _isUsingFallbackData() {
+    // Check if we're using fallback data (when API failed or returned limited data)
+    return _availableTimeSlots.isNotEmpty && 
+           _availableTimeSlots.any((slot) => 
+             slot['doctor'] == 'Available Doctor' || 
+             slot['doctor'] == 'Dr. On-Call' || 
+             slot['doctor'] == 'General Practitioner'
+           );
+  }
+
+  List<Map<String, dynamic>> _generateFallbackTimeSlots() {
+    // Generate basic fallback slots when API fails or returns empty
+    List<Map<String, dynamic>> fallbackSlots = [];
+    DateTime startDate = DateTime.now().add(const Duration(days: 1));
+    
+    // List of generic doctor names for fallback
+    List<String> fallbackDoctors = [
+      "Available Doctor",
+      "Dr. On-Call",
+      "General Practitioner"
+    ];
+    
+    // Generate slots for the next 3 weekdays
+    int addedDays = 0;
+    int dayCounter = 0;
+    
+    while (addedDays < 3 && dayCounter < 7) {
+      DateTime date = startDate.add(Duration(days: dayCounter));
+      if (date.weekday <= 5) { // Monday to Friday
+        // Morning slots
+        fallbackSlots.addAll([
+          {
+            "date": _formatDate(date),
+            "time": "09:00",
+            "doctor": fallbackDoctors[0],
+            "clinic": widget.clinic.name
+          },
+          {
+            "date": _formatDate(date),
+            "time": "11:00",
+            "doctor": fallbackDoctors[1],
+            "clinic": widget.clinic.name
+          },
+        ]);
+        
+        // Afternoon slots
+        fallbackSlots.addAll([
+          {
+            "date": _formatDate(date),
+            "time": "14:00",
+            "doctor": fallbackDoctors[2],
+            "clinic": widget.clinic.name
+          },
+          {
+            "date": _formatDate(date),
+            "time": "16:00",
+            "doctor": fallbackDoctors[addedDays % fallbackDoctors.length],
+            "clinic": widget.clinic.name
+          },
+        ]);
+        
+        addedDays++;
+      }
+      dayCounter++;
+    }
+    
+    return fallbackSlots;
+  }
+
+  List<Map<String, dynamic>> _generateBasicFallbackSlots() {
+    // Emergency basic slots when all else fails
+    DateTime tomorrow = DateTime.now().add(const Duration(days: 1));
+    return [
+      {
+        "date": _formatDate(tomorrow),
+        "time": "09:00",
+        "doctor": "Available Doctor",
+        "clinic": widget.clinic.name
+      },
+      {
+        "date": _formatDate(tomorrow),
+        "time": "14:00",
+        "doctor": "Available Doctor",
+        "clinic": widget.clinic.name
+      },
+      {
+        "date": _formatDate(tomorrow.add(const Duration(days: 1))),
+        "time": "10:00",
+        "doctor": "General Practitioner",
+        "clinic": widget.clinic.name
+      },
+      {
+        "date": _formatDate(tomorrow.add(const Duration(days: 1))),
+        "time": "15:00",
+        "doctor": "General Practitioner",
+        "clinic": widget.clinic.name
+      },
+    ];
+  }
+
+  void _nextStep() async {
     if (_currentStep == 0 && _selectedSymptoms.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please select at least one symptom')),
@@ -60,11 +409,8 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
       return;
     }
 
-    if (_currentStep == 1) {
-      // Auto-set AI urgency assessment
-      setState(() {
-        _selectedUrgency = _getAIUrgencyAssessment();
-      });
+    if (_currentStep == 0) {
+      await _callAppointmentBookingAPI();
     }
 
     if (_currentStep == 2 && _selectedDate == null) {
@@ -110,67 +456,57 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Container(
-                width: 64,
-                height: 64,
-                decoration: BoxDecoration(
-                  color: AppTheme.softGreen.withOpacity(0.2),
+                padding: const EdgeInsets.all(16),
+                decoration: const BoxDecoration(
+                  color: AppTheme.lightGreen,
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
-                  Icons.check_circle,
+                  Icons.check,
                   color: AppTheme.softGreen,
                   size: 40,
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 20),
               const Text(
                 'Appointment Confirmed!',
                 style: TextStyle(
                   fontSize: 20,
-                  fontWeight: FontWeight.w600,
+                  fontWeight: FontWeight.bold,
                   color: AppTheme.darkText,
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 12),
               Text(
-                'Your appointment at ${widget.clinic.name} has been scheduled',
-                textAlign: TextAlign.center,
-                style: const TextStyle(
+                'Your appointment has been successfully booked for ${_selectedDate != null ? '${_selectedDate!.day}/${_selectedDate!.month}/${_selectedDate!.year}' : 'the selected date'} at ${_selectedTimeSlot ?? 'the selected time'}.',
+                style: TextStyle(
                   fontSize: 14,
                   color: AppTheme.greyText,
+                  height: 1.4,
                 ),
+                textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 20),
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: AppTheme.background,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Column(
-                  children: [
-                    _buildInfoRow('Date', '${_selectedDate!.day}/${_selectedDate!.month}/${_selectedDate!.year}'),
-                    const Divider(height: 16),
-                    _buildInfoRow('Time', _selectedTimeSlot ?? ''),
-                    const Divider(height: 16),
-                    _buildInfoRow('Priority', _selectedUrgency ?? 'Low'),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  Navigator.pop(context);
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.darkText,
-                  minimumSize: const Size(double.infinity, 48),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    Navigator.of(context).pop();
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.primaryBlue,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text(
+                    'Done',
+                    style: TextStyle(fontWeight: FontWeight.w600),
                   ),
                 ),
-                child: const Text('Done'),
               ),
             ],
           ),
@@ -179,27 +515,11 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
     );
   }
 
-  Widget _buildInfoRow(String label, String value) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 14,
-            color: AppTheme.greyText,
-          ),
-        ),
-        Text(
-          value,
-          style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: AppTheme.darkText,
-          ),
-        ),
-      ],
-    );
+  String _getAIUrgencyAssessment() {
+    if (_caseType != null) {
+      return _caseType!['case_type'];
+    }
+    return 'ROUTINE';
   }
 
   @override
@@ -213,8 +533,8 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
             color: Colors.white,
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.08),
-                blurRadius: 8,
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 4,
                 offset: const Offset(0, 2),
               ),
             ],
@@ -224,16 +544,19 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  widget.clinic.name, 
-                  style: Theme.of(context).appBarTheme.titleTextStyle?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
+                  widget.clinic.name,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.darkText,
                   ),
-                Text(
+                ),
+                const Text(
                   'Book Appointment',
-                  style: Theme.of(context).appBarTheme.titleTextStyle?.copyWith(
+                  style: TextStyle(
                     fontSize: 12,
-                    fontWeight: FontWeight.w300,
+                    fontWeight: FontWeight.w400,
+                    color: AppTheme.greyText,
                   ),
                 ),
               ],
@@ -255,75 +578,34 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
   }
 
   Widget _buildQuestionCard() {
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        // Background stacked cards
-        Positioned(
-          top: 8,
-          left: -8,
-          right: -8,
-          child: Container(
-            height: 580,
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.5),
-              borderRadius: BorderRadius.circular(24),
-            ),
+    return Container(
+      constraints: const BoxConstraints(
+        maxWidth: 500,
+        maxHeight: 580,
+      ),
+      padding: const EdgeInsets.all(32),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 20,
+            offset: const Offset(0, 4),
           ),
-        ),
-        Positioned(
-          top: 16,
-          left: -16,
-          right: -16,
-          child: Container(
-            height: 580,
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.7),
-              borderRadius: BorderRadius.circular(24),
-            ),
-          ),
-        ),
-        // Main card
-        Container(
-          constraints: const BoxConstraints(
-            maxWidth: 500,
-            maxHeight: 580,
-          ),
-          padding: const EdgeInsets.all(32),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(24),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.08),
-                blurRadius: 20,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildProgressIndicator(),
-              const SizedBox(height: 32),
-              Text(
-                'Q.0${_currentStep + 1}',
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  color: AppTheme.greyText,
-                  letterSpacing: 1.2,
-                ),
-              ),
-              const SizedBox(height: 12),
-              _buildStepContent(),
-              const SizedBox(height: 24),
-              _buildNavigationButtons(),
-            ],
-          ),
-        ),
-      ],
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildProgressIndicator(),
+          const SizedBox(height: 32),
+          _buildStepContent(),
+          const SizedBox(height: 24),
+          _buildNavigationButtons(),
+        ],
+      ),
     );
   }
 
@@ -336,9 +618,7 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
             height: 4,
             margin: EdgeInsets.only(right: index < 3 ? 8 : 0),
             decoration: BoxDecoration(
-              color: isActive
-                  ? const Color(0xFFFF8A65)
-                  : const Color(0xFFE0E0E0),
+              color: isActive ? AppTheme.primaryBlue : Colors.grey.shade300,
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -388,8 +668,8 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
           Text(
             _getQuestionTitle(),
             style: const TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w600,
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
               color: AppTheme.darkText,
               height: 1.4,
             ),
@@ -399,42 +679,21 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
             'SELECT ALL THAT APPLY',
             style: TextStyle(
               fontSize: 11,
-              fontWeight: FontWeight.w500,
+              fontWeight: FontWeight.w600,
               color: AppTheme.greyText,
               letterSpacing: 0.5,
             ),
           ),
           const SizedBox(height: 12),
-          // Scrollable options container - shows ~3 options
           Expanded(
             child: ListView.builder(
-              shrinkWrap: false,
               itemCount: allSymptomOptions.length,
               itemBuilder: (context, index) {
                 final symptom = allSymptomOptions[index];
                 final isSelected = _selectedSymptoms.contains(symptom);
                 
-                // Special handling for "Other" option with text field
                 if (symptom == 'Other') {
-                  return _buildOtherOptionTile(
-                    isSelected,
-                    () {
-                      setState(() {
-                        if (isSelected) {
-                          _selectedSymptoms.remove('Other');
-                          _symptomsController.clear();
-                        } else {
-                          _selectedSymptoms.add('Other');
-                        }
-                      });
-                    },
-                  );
-                }
-                
-                return _buildOptionTile(
-                  symptom,
-                  isSelected,
-                  () {
+                  return _buildOtherOptionTile(isSelected, () {
                     setState(() {
                       if (isSelected) {
                         _selectedSymptoms.remove(symptom);
@@ -442,8 +701,18 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
                         _selectedSymptoms.add(symptom);
                       }
                     });
-                  },
-                );
+                  });
+                }
+                
+                return _buildOptionTile(symptom, isSelected, () {
+                  setState(() {
+                    if (isSelected) {
+                      _selectedSymptoms.remove(symptom);
+                    } else {
+                      _selectedSymptoms.add(symptom);
+                    }
+                  });
+                });
               },
             ),
           ),
@@ -453,7 +722,45 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
   }
 
   Widget _buildUrgencyStep() {
-    // Mock AI assessment (will be replaced with backend call)
+    if (_isLoadingAIResponse) {
+      return Expanded(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              _getQuestionTitle(),
+              style: const TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: AppTheme.darkText,
+                height: 1.4,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Expanded(
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const CircularProgressIndicator(color: AppTheme.primaryBlue),
+                    const SizedBox(height: 16),
+                    Text(
+                      'AI is analyzing your symptoms...',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: AppTheme.greyText,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     final aiUrgency = _getAIUrgencyAssessment();
     
     return Expanded(
@@ -463,97 +770,499 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
           Text(
             _getQuestionTitle(),
             style: const TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w600,
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
               color: AppTheme.darkText,
               height: 1.4,
             ),
           ),
           const SizedBox(height: 16),
           Expanded(
+            child: Column(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: _getUrgencyBackgroundColor(aiUrgency),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: _getUrgencyBorderColor(aiUrgency),
+                      width: 2,
+                    ),
+                  ),
+                  child: Column(
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: _getUrgencyBorderColor(aiUrgency),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              _getUrgencyIcon(aiUrgency),
+                              color: Colors.white,
+                              size: 24,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  _getUrgencyDisplayName(aiUrgency),
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: _getUrgencyBorderColor(aiUrgency),
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                const Text(
+                                  'AI Assessment Result',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: AppTheme.greyText,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        _caseType?['response_template'] ?? _getUrgencyMessage(aiUrgency),
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: AppTheme.darkText,
+                          height: 1.4,
+                        ),
+                        textAlign: TextAlign.left,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDateSelectionStep() {
+    return Expanded(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            _getQuestionTitle(),
+            style: const TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: AppTheme.darkText,
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 12),
+          
+          // Make the content scrollable
+          Expanded(
             child: SingleChildScrollView(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // AI Recommendation Banner
+                  if (_recommendedTime != null && (_recommendedTime!['slot_found'] == true || _recommendedTime!.containsKey('display_date'))) ...[
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: AppTheme.lightBlue,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: AppTheme.primaryBlue,
+                          width: 1,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.smart_toy_rounded,
+                            color: AppTheme.primaryBlue,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'AI recommends: ${_recommendedTime!['display_date']} at ${_recommendedTime!['display_time']} with ${_recommendedTime!['doctor']}',
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: AppTheme.primaryBlue,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+          
+          // Refined User Message Card
+          if (_refinedUserMessage != null) ...[
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppTheme.lightGreen,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: AppTheme.softGreen,
+                  width: 1,
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.info_outline,
+                        color: AppTheme.softGreen,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
+                      const Text(
+                        'Assessment Summary',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.softGreen,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    _refinedUserMessage!,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: AppTheme.darkText,
+                      height: 1.4,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
+          
+          // Fallback mode indicator (show only when using fallback slots)
+          if (_isUsingFallbackData()) ...[  
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.orange.shade50,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: Colors.orange.shade200,
+                  width: 1,
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.info_outline,
+                    color: Colors.orange.shade600,
+                    size: 16,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Showing general availability. Contact clinic for updated slots.',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.orange.shade700,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
+          
+                  // Available Time Slots
                   const Text(
-                    'AI ASSESSMENT',
+                    'Available appointments:',
                     style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w500,
-                      color: AppTheme.greyText,
-                      letterSpacing: 0.5,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: AppTheme.darkText,
                     ),
                   ),
                   const SizedBox(height: 12),
-                  Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: _getUrgencyBackgroundColor(aiUrgency),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: _getUrgencyBorderColor(aiUrgency),
-                        width: 2,
+                  
+                  // Time slots (no longer wrapped in Expanded)
+                  _buildAvailableTimeSlots(),
+                  const SizedBox(height: 20), // Add bottom padding
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAvailableTimeSlots() {
+    // Ensure we always have fallback slots if empty
+    List<Map<String, dynamic>> slotsToShow = _availableTimeSlots;
+    
+    // Double check - if still empty, generate emergency fallback
+    if (slotsToShow.isEmpty) {
+      slotsToShow = _generateBasicFallbackSlots();
+    }
+
+    if (slotsToShow.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.event_busy,
+              size: 48,
+              color: AppTheme.greyText,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'No available slots found',
+              style: TextStyle(
+                fontSize: 16,
+                color: AppTheme.greyText,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Please try again later or contact the clinic directly',
+              style: TextStyle(
+                fontSize: 14,
+                color: AppTheme.greyText,
+                fontWeight: FontWeight.w400,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Group slots by date
+    Map<String, List<Map<String, dynamic>>> groupedSlots = {};
+    for (var slot in slotsToShow) {
+      String date = slot['date'];
+      if (!groupedSlots.containsKey(date)) {
+        groupedSlots[date] = [];
+      }
+      groupedSlots[date]!.add(slot);
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: groupedSlots.keys.map((date) {
+        List<Map<String, dynamic>> daySlots = groupedSlots[date]!;
+        
+        return Container(
+          margin: const EdgeInsets.only(bottom: 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                _formatDateHeader(date),
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.darkText,
+                ),
+              ),
+              const SizedBox(height: 8),
+              ...daySlots.map((slot) => _buildTimeSlotCard(slot)).toList(),
+            ],
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _buildTimeSlotCard(Map<String, dynamic> slot) {
+    bool isRecommended = _recommendedTime != null &&
+        _recommendedTime!['display_date'] == slot['date'] &&
+        _recommendedTime!['display_time'] == slot['time'];
+    
+    bool isSelected = _selectedDate != null &&
+        _selectedTimeSlot != null &&
+        _formatDate(_selectedDate!) == slot['date'] &&
+        _selectedTimeSlot == slot['time'];
+
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          List<String> dateParts = slot['date'].split('-');
+          _selectedDate = DateTime(
+            int.parse(dateParts[2]),
+            int.parse(dateParts[1]),
+            int.parse(dateParts[0]),
+          );
+          _selectedTimeSlot = slot['time'];
+        });
+      },
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: isSelected 
+              ? AppTheme.lightBlue
+              : isRecommended 
+                  ? AppTheme.lightGreen
+                  : Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected
+                ? AppTheme.primaryBlue
+                : isRecommended
+                    ? AppTheme.softGreen
+                    : Colors.grey.shade300,
+            width: isSelected || isRecommended ? 2 : 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      Icons.access_time,
+                      size: 16,
+                      color: isSelected
+                          ? AppTheme.primaryBlue
+                          : isRecommended
+                              ? AppTheme.softGreen
+                              : AppTheme.greyText,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      slot['time'],
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: isSelected
+                            ? AppTheme.primaryBlue
+                            : AppTheme.darkText,
                       ),
                     ),
-                    child: Column(
-                      children: [
-                        Icon(
-                          _getUrgencyIcon(aiUrgency),
-                          size: 48,
-                          color: _getUrgencyBorderColor(aiUrgency),
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          '${aiUrgency} Priority',
-                          style: TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.w600,
-                            color: _getUrgencyBorderColor(aiUrgency),
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          _getUrgencyMessage(aiUrgency),
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            fontSize: 13,
-                            color: AppTheme.darkText,
-                            height: 1.5,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  const Text(
-                    'Your reported symptoms:',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                      color: AppTheme.greyText,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: _selectedSymptoms.map((symptom) {
-                      return Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    if (isRecommended) ...[
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                         decoration: BoxDecoration(
-                          color: AppTheme.lightBlue,
-                          borderRadius: BorderRadius.circular(20),
+                          color: AppTheme.softGreen,
+                          borderRadius: BorderRadius.circular(12),
                         ),
-                        child: Text(
-                          symptom,
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: AppTheme.primaryBlue,
-                            fontWeight: FontWeight.w500,
+                        child: const Text(
+                          'AI Recommended',
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
-                      );
-                    }).toList(),
+                      ),
+                    ],
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  slot['doctor'],
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: AppTheme.greyText,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+            const Spacer(),
+            if (isSelected)
+              const Icon(
+                Icons.check_circle,
+                color: AppTheme.primaryBlue,
+                size: 24,
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _formatDateHeader(String dateString) {
+    List<String> parts = dateString.split('-');
+    DateTime date = DateTime(
+      int.parse(parts[2]),
+      int.parse(parts[1]),
+      int.parse(parts[0]),
+    );
+    
+    List<String> weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    List<String> months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
+                           'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    
+    return '${weekdays[date.weekday - 1]}, ${date.day} ${months[date.month - 1]} ${date.year}';
+  }
+
+  Widget _buildConfirmationStep() {
+    return Expanded(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            _getQuestionTitle(),
+            style: const TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: AppTheme.darkText,
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 20),
+          Expanded(
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildSummaryItem(
+                    'Clinic',
+                    widget.clinic.name,
+                  ),
+                  _buildSummaryItem(
+                    'Symptoms',
+                    _selectedSymptoms.join(', '),
+                  ),
+                  _buildSummaryItem(
+                    'Priority Level',
+                    _getUrgencyDisplayName(_getAIUrgencyAssessment()),
+                  ),
+                  _buildSummaryItem(
+                    'Date & Time',
+                    _selectedDate != null && _selectedTimeSlot != null
+                        ? '${_selectedDate!.day}/${_selectedDate!.month}/${_selectedDate!.year} at $_selectedTimeSlot'
+                        : 'Not selected',
                   ),
                 ],
               ),
@@ -564,69 +1273,106 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
     );
   }
 
-  String _getAIUrgencyAssessment() {
-    // Mock AI logic (will be replaced with actual backend call)
-    if (_selectedSymptoms.contains('Fever') && _selectedSymptoms.contains('Headache')) {
-      return 'Medium';
-    } else if (_selectedSymptoms.contains('Dizziness') || _selectedSymptoms.contains('Nausea')) {
-      return 'High';
-    } else {
-      return 'Low';
-    }
+  Widget _buildSummaryItem(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: AppTheme.greyText,
+              letterSpacing: 0.5,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: AppTheme.darkText,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
-  Color _getUrgencyBackgroundColor(String urgency) {
-    switch (urgency) {
-      case 'High':
-        return AppTheme.lightRed;
-      case 'Medium':
-        return AppTheme.lightOrange;
-      case 'Low':
-        return AppTheme.lightGreen;
-      default:
-        return AppTheme.background;
-    }
+  Widget _buildNavigationButtons() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        if (_currentStep > 0 && !_isLoadingAIResponse) ...[
+          GestureDetector(
+            onTap: _previousStep,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              decoration: BoxDecoration(
+                color: Colors.transparent,
+                borderRadius: BorderRadius.circular(25),
+                border: Border.all(color: AppTheme.greyText),
+              ),
+              child: Text(
+                'Back',
+                style: TextStyle(
+                  color: AppTheme.greyText,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+        ],
+        Expanded(
+          child: ElevatedButton(
+            onPressed: _isLoadingAIResponse ? null : _nextStep,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _isLoadingAIResponse ? AppTheme.greyText : AppTheme.primaryBlue,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(25),
+              ),
+              elevation: 0,
+            ),
+            child: _isLoadingAIResponse
+                ? Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      const Text(
+                        'Analyzing...',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ],
+                  )
+                : Text(
+                    _currentStep == 3 ? 'Confirm Appointment' : 'Continue',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 16,
+                    ),
+                  ),
+          ),
+        ),
+      ],
+    );
   }
-
-  Color _getUrgencyBorderColor(String urgency) {
-    switch (urgency) {
-      case 'High':
-        return AppTheme.softRed;
-      case 'Medium':
-        return AppTheme.softOrange;
-      case 'Low':
-        return AppTheme.softGreen;
-      default:
-        return AppTheme.greyText;
-    }
-  }
-
-  IconData _getUrgencyIcon(String urgency) {
-    switch (urgency) {
-      case 'High':
-        return Icons.warning_rounded;
-      case 'Medium':
-        return Icons.info_rounded;
-      case 'Low':
-        return Icons.check_circle_rounded;
-      default:
-        return Icons.help_rounded;
-    }
-  }
-
-  String _getUrgencyMessage(String urgency) {
-    switch (urgency) {
-      case 'High':
-        return 'Based on your symptoms, we recommend seeing a doctor as soon as possible. We\'ll prioritize your appointment.';
-      case 'Medium':
-        return 'Your symptoms require medical attention. We\'ll schedule you within 1-2 days.';
-      case 'Low':
-        return 'Your symptoms are manageable. A routine appointment should be sufficient.';
-      default:
-        return '';
-    }
-  }
-
 
   Widget _buildOptionTile(String label, bool isSelected, VoidCallback onTap, {bool isRadio = false}) {
     return GestureDetector(
@@ -645,11 +1391,11 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
         child: Row(
           children: [
             Container(
-              width: 22,
-              height: 22,
+              width: 20,
+              height: 20,
               decoration: BoxDecoration(
                 shape: isRadio ? BoxShape.circle : BoxShape.rectangle,
-                borderRadius: isRadio ? null : BorderRadius.circular(5),
+                borderRadius: isRadio ? null : BorderRadius.circular(4),
                 border: Border.all(
                   color: isSelected ? AppTheme.primaryBlue : Colors.grey.shade400,
                   width: 2,
@@ -659,19 +1405,19 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
               child: isSelected
                   ? Icon(
                       isRadio ? Icons.circle : Icons.check,
-                      size: isRadio ? 11 : 15,
                       color: Colors.white,
+                      size: isRadio ? 12 : 14,
                     )
                   : null,
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 14),
             Expanded(
               child: Text(
                 label,
                 style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: isSelected ? FontWeight.w500 : FontWeight.w400,
-                  color: AppTheme.darkText,
+                  fontSize: 16,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                  color: isSelected ? AppTheme.primaryBlue : AppTheme.darkText,
                 ),
               ),
             ),
@@ -701,11 +1447,10 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
             child: Row(
               children: [
                 Container(
-                  width: 22,
-                  height: 22,
+                  width: 20,
+                  height: 20,
                   decoration: BoxDecoration(
-                    shape: BoxShape.rectangle,
-                    borderRadius: BorderRadius.circular(5),
+                    borderRadius: BorderRadius.circular(4),
                     border: Border.all(
                       color: isSelected ? AppTheme.primaryBlue : Colors.grey.shade400,
                       width: 2,
@@ -715,19 +1460,19 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
                   child: isSelected
                       ? const Icon(
                           Icons.check,
-                          size: 15,
                           color: Colors.white,
+                          size: 14,
                         )
                       : null,
                 ),
-                const SizedBox(width: 12),
-                const Expanded(
+                const SizedBox(width: 14),
+                Expanded(
                   child: Text(
                     'Other',
                     style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: AppTheme.darkText,
+                      fontSize: 16,
+                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                      color: isSelected ? AppTheme.primaryBlue : AppTheme.darkText,
                     ),
                   ),
                 ),
@@ -738,23 +1483,19 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
             const SizedBox(height: 12),
             TextField(
               controller: _symptomsController,
-              maxLines: 2,
               decoration: InputDecoration(
                 hintText: 'Describe your symptoms...',
-                hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 13),
-                filled: true,
-                fillColor: Colors.white,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: Colors.grey.shade300),
+                hintStyle: TextStyle(
+                  color: AppTheme.greyText,
+                  fontSize: 14,
                 ),
-                enabledBorder: OutlineInputBorder(
+                border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
                   borderSide: BorderSide(color: Colors.grey.shade300),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(color: AppTheme.primaryBlue, width: 2),
+                  borderSide: BorderSide(color: AppTheme.primaryBlue, width: 2),
                 ),
                 contentPadding: const EdgeInsets.all(10),
               ),
@@ -765,362 +1506,79 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
     );
   }
 
-  Widget _buildDateSelectionStep() {
-    final isAISuggestedDate = _selectedDate != null &&
-        _selectedDate!.year == _aiSuggestedDate.year &&
-        _selectedDate!.month == _aiSuggestedDate.month &&
-        _selectedDate!.day == _aiSuggestedDate.day;
-    
-    return Expanded(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            _getQuestionTitle(),
-            style: const TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w600,
-              color: AppTheme.darkText,
-              height: 1.4,
-            ),
-          ),
-          const SizedBox(height: 12),
-          
-          // AI Suggestion Banner
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: AppTheme.lightBlue,
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: AppTheme.primaryBlue.withOpacity(0.3)),
-            ),
-            child: Row(
-              children: [
-                const Icon(Icons.auto_awesome, color: AppTheme.primaryBlue, size: 18),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'AI Recommended',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: AppTheme.primaryBlue,
-                        ),
-                      ),
-                      Text(
-                        '${_aiSuggestedDate.day}/${_aiSuggestedDate.month}/${_aiSuggestedDate.year} at $_aiSuggestedTime',
-                        style: const TextStyle(
-                          fontSize: 10,
-                          color: AppTheme.darkText,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-          
-          // Scrollable content
-          Expanded(
-            child: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Date Picker
-                  const Text(
-                    'SELECT DATE',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w500,
-                      color: AppTheme.greyText,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Container(
-                    decoration: BoxDecoration(
-                      color: AppTheme.background,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Theme(
-                      data: Theme.of(context).copyWith(
-                        colorScheme: const ColorScheme.light(
-                          primary: AppTheme.primaryBlue,
-                        ),
-                      ),
-                      child: CalendarDatePicker(
-                        initialDate: _aiSuggestedDate,
-                        firstDate: DateTime.now(),
-                        lastDate: DateTime.now().add(const Duration(days: 30)),
-                        onDateChanged: (date) {
-                          setState(() {
-                            _selectedDate = date;
-                            _selectedTimeSlot = null; // Reset time slot
-                          });
-                        },
-                      ),
-                    ),
-                  ),
-                  
-                  // Time Slots
-                  if (_selectedDate != null) ...[
-                    const SizedBox(height: 16),
-                    const Text(
-                      'SELECT TIME',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w500,
-                        color: AppTheme.greyText,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    _buildTimeDropdown(isAISuggestedDate),
-                  ],
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
+  String _getUrgencyDisplayName(String urgency) {
+    switch (urgency) {
+      case 'EMERGENCY':
+        return 'Emergency Priority';
+      case 'URGENT':
+        return 'Urgent Priority';
+      case 'ROUTINE':
+        return 'Routine Priority';
+      case 'NON_URGENT':
+        return 'Non-Urgent Priority';
+      default:
+        return 'Standard Priority';
+    }
   }
 
-  Widget _buildTimeDropdown(bool isAISuggestedDate) {
-    // Mock available time slots
-    final timeSlots = [
-      '9:00 AM', '10:00 AM', '11:00 AM',
-      '2:00 PM', '3:00 PM', '4:00 PM',
-    ];
-    
-    return PopupMenuButton<String>(
-      offset: const Offset(0, 50),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
-      onSelected: (time) {
-        setState(() {
-          _selectedTimeSlot = time;
-        });
-      },
-      itemBuilder: (context) {
-        return timeSlots.map((time) {
-          final isAISuggested = isAISuggestedDate && time == _aiSuggestedTime;
-          final isSelected = _selectedTimeSlot == time;
-          
-          return PopupMenuItem<String>(
-            value: time,
-            child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 4),
-              child: Row(
-                children: [
-                  if (isAISuggested)
-                    const Padding(
-                      padding: EdgeInsets.only(right: 8),
-                      child: Icon(
-                        Icons.auto_awesome,
-                        size: 16,
-                        color: AppTheme.primaryBlue,
-                      ),
-                    ),
-                  Expanded(
-                    child: Text(
-                      time,
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: isAISuggested ? FontWeight.w600 : FontWeight.w500,
-                        color: isAISuggested ? AppTheme.primaryBlue : AppTheme.darkText,
-                      ),
-                    ),
-                  ),
-                  if (isSelected)
-                    const Icon(
-                      Icons.check,
-                      size: 18,
-                      color: AppTheme.primaryBlue,
-                    ),
-                ],
-              ),
-            ),
-          );
-        }).toList();
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: _selectedTimeSlot != null ? AppTheme.primaryBlue : Colors.grey.shade300,
-            width: _selectedTimeSlot != null ? 2 : 1,
-          ),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              _selectedTimeSlot ?? 'Select time slot',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: _selectedTimeSlot != null ? FontWeight.w500 : FontWeight.w400,
-                color: _selectedTimeSlot != null ? AppTheme.darkText : AppTheme.greyText,
-              ),
-            ),
-            Icon(
-              Icons.arrow_drop_down,
-              color: _selectedTimeSlot != null ? AppTheme.primaryBlue : AppTheme.greyText,
-            ),
-          ],
-        ),
-      ),
-    );
+  Color _getUrgencyBackgroundColor(String urgency) {
+    switch (urgency) {
+      case 'EMERGENCY':
+        return AppTheme.lightRed;
+      case 'URGENT':
+        return AppTheme.lightOrange;
+      case 'ROUTINE':
+        return AppTheme.lightGreen;
+      case 'NON_URGENT':
+        return AppTheme.lightBlue;
+      default:
+        return AppTheme.background;
+    }
   }
 
-  Widget _buildConfirmationStep() {
-    return Expanded(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            _getQuestionTitle(),
-            style: const TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w600,
-              color: AppTheme.darkText,
-              height: 1.4,
-            ),
-          ),
-          const SizedBox(height: 20),
-          Expanded(
-            child: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildSummaryItem('Clinic', widget.clinic.name),
-                  _buildSummaryItem(
-                    'Date & Time',
-                    '${_selectedDate!.day}/${_selectedDate!.month}/${_selectedDate!.year} at $_selectedTimeSlot',
-                  ),
-                  _buildSummaryItem('Priority', '${_selectedUrgency ?? 'Low'}'),
-                  _buildSummaryItem('Symptoms', _selectedSymptoms.where((s) => s != 'Other').join(', ')),
-                  if (_selectedSymptoms.contains('Other') && _symptomsController.text.isNotEmpty)
-                    _buildSummaryItem('Other Symptoms', _symptomsController.text),
-                  const SizedBox(height: 16),
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: AppTheme.lightBlue,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(
-                          Icons.info_outline,
-                          color: AppTheme.primaryBlue,
-                          size: 18,
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            'You\'ll receive a confirmation via SMS',
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: AppTheme.darkText.withOpacity(0.8),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
+  Color _getUrgencyBorderColor(String urgency) {
+    switch (urgency) {
+      case 'EMERGENCY':
+        return AppTheme.softRed;
+      case 'URGENT':
+        return AppTheme.softOrange;
+      case 'ROUTINE':
+        return AppTheme.softGreen;
+      case 'NON_URGENT':
+        return AppTheme.primaryBlue;
+      default:
+        return AppTheme.greyText;
+    }
   }
 
-  Widget _buildSummaryItem(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 14),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 11,
-              color: AppTheme.greyText,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            value,
-            style: const TextStyle(
-              fontSize: 14,
-              color: AppTheme.darkText,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
-      ),
-    );
+  IconData _getUrgencyIcon(String urgency) {
+    switch (urgency) {
+      case 'EMERGENCY':
+        return Icons.local_hospital_rounded;
+      case 'URGENT':
+        return Icons.warning_rounded;
+      case 'ROUTINE':
+        return Icons.schedule_rounded;
+      case 'NON_URGENT':
+        return Icons.check_circle_rounded;
+      default:
+        return Icons.help_rounded;
+    }
   }
 
-  Widget _buildNavigationButtons() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        if (_currentStep > 0) ...[
-          GestureDetector(
-            onTap: _previousStep,
-            child: Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: Colors.grey.shade300, width: 1),
-                color: Colors.white,
-              ),
-              child: const Icon(
-                Icons.arrow_back,
-                color: AppTheme.darkText,
-                size: 20,
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-        ],
-        Expanded(
-          child: ElevatedButton(
-            onPressed: _nextStep,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.darkText,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              elevation: 0,
-            ),
-            child: Text(
-              _currentStep == 3 ? 'Confirm' : 'Next',
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
+  String _getUrgencyMessage(String urgency) {
+    switch (urgency) {
+      case 'EMERGENCY':
+        return 'Your symptoms indicate a potential emergency. Please seek immediate medical attention.';
+      case 'URGENT':
+        return 'Your symptoms require prompt medical attention. We recommend scheduling an appointment within 24-48 hours.';
+      case 'ROUTINE':
+        return 'Your symptoms can be addressed during a routine appointment. Please schedule at your convenience.';
+      case 'NON_URGENT':
+        return 'Your symptoms are mild and can be monitored. Consider scheduling a routine check-up.';
+      default:
+        return '';
+    }
   }
 }
 

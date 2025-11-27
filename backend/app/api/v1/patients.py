@@ -15,9 +15,14 @@ def get_clinic_name_from_id(clinic_id: str, clinic_name: str = None) -> str:
     
     # Default mapping - you may want to use a database lookup in production
     clinic_name_mapping = {
+        'clinic_001': 'Klinik Bandar Utama',
+        'clinic_002': 'Klinik Sri Hartamas',
+        'clinic_003': 'Klinik Desa Jaya',
+        'clinic_004': 'Klinik Famili Wangsa Maju',
+        # Legacy mappings for backward compatibility
         'klinik-bandar-utama': 'Klinik Bandar Utama',
         'klinik-sri-hartamas': 'Klinik Sri Hartamas', 
-        'klinik-desa-jaya': 'Pusat Kesihatan Setapak',
+        'klinik-desa-jaya': 'Klinik Desa Jaya',
         'klinik-wangsa': 'Klinik Famili Wangsa Maju',
         # Add more mappings as needed
     }
@@ -33,7 +38,7 @@ async def get_available_clinics():
     """
     return [
         {
-            "clinic_id": "klinik-bandar-utama",
+            "clinic_id": "clinic_001",
             "name": "Klinik Bandar Utama",
             "address": "Bandar Utama, Petaling Jaya",
             "phone": "+603-7725-0123",
@@ -44,7 +49,7 @@ async def get_available_clinics():
             "is_active": True
         },
         {
-            "clinic_id": "klinik-sri-hartamas", 
+            "clinic_id": "clinic_002", 
             "name": "Klinik Sri Hartamas",
             "address": "Sri Hartamas, Kuala Lumpur",
             "phone": "+603-6201-9876",
@@ -66,7 +71,6 @@ async def unified_chat(request: ChatRequest):
     try:
         clinic_name = get_clinic_name_from_id(request.clinic_id, request.clinic_name)
         sop_result = await jamai_service.pdf_sop_answering(
-            clinic_id=request.clinic_id,
             clinic_name=clinic_name,
             question=request.message,
             language=request.language
@@ -87,7 +91,6 @@ async def search_pdf_sop(request: ChatRequest):
     try:
         clinic_name = get_clinic_name_from_id(request.clinic_id, request.clinic_name)
         sop_result = await jamai_service.pdf_sop_answering(
-            clinic_id=request.clinic_id,
             clinic_name=clinic_name,
             question=request.message,
             language=request.language
@@ -103,18 +106,28 @@ async def search_pdf_sop(request: ChatRequest):
 async def book_appointment(request: ChatRequest):
     """
     Handles appointment booking using Action Table A (Appointment Booking)
-    Input: user_input, clinic_name → Output: refined_user_message, booking_record
+    Input: user_input, clinic_name → Output: structured appointment data
+    Returns all appointment booking fields in the reply as JSON
     """
     try:
         clinic_name = get_clinic_name_from_id(request.clinic_id, request.clinic_name)
         booking_result = await jamai_service.appointment_booking(
-            clinic_id=request.clinic_id,
             clinic_name=clinic_name,
             user_input=request.message,
             language=request.language
         )
+        
+        # Return structured data in reply field as JSON string
+        import json
+        structured_response = {
+            "available_time_slots": booking_result.get("available_time_slots", "[]"),
+            "case_type": booking_result.get("case_type", "{}"),
+            "recommended_time": booking_result.get("recommended_time", "{}"),
+            "refined_user_message": booking_result.get("refined_user_message", "Appointment processed")
+        }
+        
         return ChatResponse(
-            reply=booking_result.get("refined_user_message", "Appointment processed"),
+            reply=json.dumps(structured_response),
             source_document=booking_result.get("booking_record", "{}")
         )
     except Exception as e:
@@ -136,7 +149,6 @@ async def trigger_triage(request: TriageRequest):
         
         clinic_name = get_clinic_name_from_id(request.clinic_id, request.clinic_name)
         booking_result = await jamai_service.appointment_booking(
-            clinic_id=request.clinic_id,
             clinic_name=clinic_name,
             user_input=user_query,
             language="BM"
@@ -163,7 +175,6 @@ async def simple_triage(clinic_id: str, symptoms: str, clinic_name: str = None):
     try:
         resolved_clinic_name = get_clinic_name_from_id(clinic_id, clinic_name)
         booking_result = await jamai_service.appointment_booking(
-            clinic_id=clinic_id,
             clinic_name=resolved_clinic_name,
             user_input=f"Symptoms: {symptoms}",
             language="BM"

@@ -12,11 +12,11 @@ class JamAIService:
             token=settings.JAMAI_API_KEY
         )
 
-    async def appointment_booking(self, clinic_id: str, clinic_name: str, user_input: str, language: str = "BM"):
+    async def appointment_booking(self, clinic_name: str, user_input: str, language: str = "BM"):
         """
         A. Appointment Booking Action Table
         Strict Input: user_input (str), clinic_name (str)
-        Strict Output: refined_user_message (str), booking_record (str json format)
+        Strict Output: available_time_slots, case_type, recommended_time, refined_user_message, booking_record
         """
         try:
             # Add row to Action Table using the working pattern from test_action.py
@@ -36,13 +36,23 @@ class JamAIService:
             if response.rows and len(response.rows) > 0:
                 row = response.rows[0]
                 
-                # Access columns directly as in working test
-                available_time_slots = row.columns["available_time_slots"].text
-                case_type = row.columns["case_type"].text
-                recommended_time = row.columns["recommended_time"].text
-                refined_message = row.columns["refined_user_message"].text 
-                booking_record = row.columns.get("booking_record", {}).get("text", "{}")
+                # Safely access columns with a helper function and log issues
+                def get_col(name, default=""):
+                    if name not in row.columns:
+                        logger.warning(f"Column '{name}' not found in JamAI response.")
+                        return default
+                    return row.columns[name].text
+
+                available_time_slots = get_col("available_time_slots", "[]")
+                case_type = get_col("case_type", "{}")
+                recommended_time = get_col("recommended_time", "{}")
+                refined_message = get_col("refined_user_message", "Appointment processed")
+                booking_record = get_col("booking_record", "{}")
                 
+                # Log the retrieved values for debugging
+                logger.info(f"JamAI available_time_slots: {available_time_slots}")
+                logger.info(f"JamAI case_type: {case_type}")
+
                 return {
                     "available_time_slots": available_time_slots,
                     "case_type": case_type,
@@ -50,27 +60,29 @@ class JamAIService:
                     "refined_user_message": refined_message,
                     "booking_record": booking_record
                 }
+            else:
+                logger.warning("JamAI response contained no rows.")
                         
             return {
-                "available_time_slots": "{}",
-                "case_type": "{}",
-                "recommended_time": "{}",
+                "available_time_slots": "[]",
+                "case_type": '{"case_type": "ROUTINE", "booking_needed": true, "response_template": "Please book an appointment"}',
+                "recommended_time": '{"slot_found": false}',
                 "refined_user_message": "Appointment request processed",
                 "booking_record": "{}"
             }
             
         except Exception as e:
-            logger.error(f"Error in appointment_booking for clinic {clinic_id}: {str(e)}")
+            logger.error(f"Error in appointment_booking for clinic {clinic_name}: {str(e)}")
             fallback_message = "Maaf, sistem tempahan menghadapi masalah." if language == "BM" else "Sorry, appointment booking system is experiencing issues."
             return {
-                "available_time_slots": "{}",
-                "case_type": "{}",
-                "recommended_time": "{}",
+                "available_time_slots": "[]",
+                "case_type": '{"case_type": "ROUTINE", "booking_needed": true, "response_template": "' + fallback_message + '"}',
+                "recommended_time": '{"slot_found": false}',
                 "refined_user_message": fallback_message,
                 "booking_record": "{}"
             }
 
-    async def pdf_sop_answering(self, clinic_id: str, clinic_name: str, question: str, language: str = "BM"):
+    async def pdf_sop_answering(self, clinic_name: str, question: str, language: str = "BM"):
         """
         B. SOP QnA Action Table
         Strict Input: question (str), clinic_name (str)
@@ -109,14 +121,14 @@ class JamAIService:
             }
             
         except Exception as e:
-            logger.error(f"Error in pdf_sop_answering for clinic {clinic_id}: {str(e)}")
+            logger.error(f"Error in pdf_sop_answering for clinic {clinic_name}: {str(e)}")
             fallback_message = "Maaf, pencarian dokumen menghadapi masalah." if language == "BM" else "Sorry, document search is experiencing issues."
             return {
                 "response": fallback_message,
                 "source_document": ""
             }
 
-    async def medication_lookup_staff(self, clinic_id: str, clinic_name: str, user_input: str):
+    async def medication_lookup_staff(self, clinic_name: str, user_input: str):
         """
         C. Medical Lookup Action Table (Staff Only)
         Strict Input: user_input (str), clinic_name (str)
@@ -155,7 +167,7 @@ class JamAIService:
             }
             
         except Exception as e:
-            logger.error(f"Error in medication_lookup_staff for clinic {clinic_id}: {str(e)}")
+            logger.error(f"Error in medication_lookup_staff for clinic {clinic_name}: {str(e)}")
             return {
                 "drug_entry": "{}",
                 "medication_message": f"Error checking medication: {str(e)}"

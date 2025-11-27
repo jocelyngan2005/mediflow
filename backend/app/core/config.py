@@ -18,5 +18,9 @@ class Settings(BaseSettings):
 
     class Config:
         env_file = ".env"
+    
+    def get_all_clinic_ids(self):
+        """Return list of configured clinic IDs"""
+        return ["cid_01_public", "cid_02_private", "cid_03_specialist"]
 
 settings = Settings()
