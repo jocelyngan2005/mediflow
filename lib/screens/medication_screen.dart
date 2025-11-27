@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:mediflow/theme/app_theme.dart';
 import 'package:mediflow/screens/clinic_selection_screen.dart';
 
@@ -29,100 +30,92 @@ class _MedicationScreenState extends State<MedicationScreen> {
     super.dispose();
   }
 
-  void _loadMedications() {
-    // Simulate loading from CSV
-    Future.delayed(const Duration(seconds: 1), () {
+  void _loadMedications() async {
+    try {
+      final csvString = await rootBundle.loadString('assets/medication_inventory.csv');
+      final lines = csvString.split('\n');
+      
+      // Skip header row and filter by Klinik Bandar Utama
+      final medicationData = <List<String>>[];
+      for (int i = 1; i < lines.length; i++) {
+        if (lines[i].trim().isEmpty) continue;
+        final row = _parseCsvLine(lines[i]);
+        if (row.length > 11 && row[11].trim() == 'Klinik Bandar Utama') {
+          medicationData.add(row);
+        }
+      }
+      
       setState(() {
-        _medications = _getMockMedications();
+        _medications = medicationData.map((row) => _createMedicationFromCsv(row)).toList();
         _filteredMedications = _medications;
         _isLoading = false;
       });
-    });
+    } catch (e) {
+      print('Error loading medications: $e');
+      setState(() {
+        _medications = [];
+        _filteredMedications = [];
+        _isLoading = false;
+      });
+    }
   }
 
-  List<Medication> _getMockMedications() {
-    return [
-      Medication(
-        name: 'Panadol (Paracetamol)',
-        genericName: 'Paracetamol 500mg',
-        stock: 250,
-        minStock: 100,
-        location: 'Shelf A1',
-        price: 0.50,
-        expiryDate: DateTime(2025, 12, 31),
-        category: 'Pain Relief',
-      ),
-      Medication(
-        name: 'Chlorpheniramine',
-        genericName: 'Chlorpheniramine Maleate 4mg',
-        stock: 180,
-        minStock: 100,
-        location: 'Shelf A2',
-        price: 0.30,
-        expiryDate: DateTime(2025, 10, 15),
-        category: 'Antihistamine',
-      ),
-      Medication(
-        name: 'Amoxicillin',
-        genericName: 'Amoxicillin 500mg',
-        stock: 45,
-        minStock: 50,
-        location: 'Shelf B1',
-        price: 1.20,
-        expiryDate: DateTime(2025, 8, 20),
-        category: 'Antibiotic',
-      ),
-      Medication(
-        name: 'Omeprazole',
-        genericName: 'Omeprazole 20mg',
-        stock: 120,
-        minStock: 80,
-        location: 'Shelf B2',
-        price: 0.80,
-        expiryDate: DateTime(2026, 3, 10),
-        category: 'Gastric',
-      ),
-      Medication(
-        name: 'Salbutamol Inhaler',
-        genericName: 'Salbutamol 100mcg',
-        stock: 25,
-        minStock: 30,
-        location: 'Shelf C1',
-        price: 15.00,
-        expiryDate: DateTime(2025, 11, 5),
-        category: 'Respiratory',
-      ),
-      Medication(
-        name: 'Metformin',
-        genericName: 'Metformin 500mg',
-        stock: 200,
-        minStock: 150,
-        location: 'Shelf C2',
-        price: 0.40,
-        expiryDate: DateTime(2026, 1, 15),
-        category: 'Diabetes',
-      ),
-      Medication(
-        name: 'Amlodipine',
-        genericName: 'Amlodipine 5mg',
-        stock: 150,
-        minStock: 100,
-        location: 'Shelf C3',
-        price: 0.60,
-        expiryDate: DateTime(2025, 9, 30),
-        category: 'Hypertension',
-      ),
-      Medication(
-        name: 'Ibuprofen',
-        genericName: 'Ibuprofen 400mg',
-        stock: 80,
-        minStock: 100,
-        location: 'Shelf A3',
-        price: 0.70,
-        expiryDate: DateTime(2025, 7, 25),
-        category: 'Pain Relief',
-      ),
-    ];
+  List<String> _parseCsvLine(String line) {
+    final result = <String>[];
+    bool inQuotes = false;
+    String current = '';
+    
+    for (int i = 0; i < line.length; i++) {
+      final char = line[i];
+      if (char == '"') {
+        inQuotes = !inQuotes;
+      } else if (char == ',' && !inQuotes) {
+        result.add(current.trim());
+        current = '';
+      } else {
+        current += char;
+      }
+    }
+    result.add(current.trim());
+    return result;
+  }
+
+  Medication _createMedicationFromCsv(List<String> row) {
+    // CSV columns: english_name, malay_name, generic_name, stock_quantity, unit, price_rm, reorder_level, category, common_uses, location, supplier, clinic, expiry_date
+    String getValue(int index, String defaultValue) {
+      return (index < row.length && row[index].isNotEmpty) ? row[index] : defaultValue;
+    }
+    
+    return Medication(
+      name: getValue(0, 'Unknown'),
+      genericName: getValue(2, 'Unknown'),
+      stock: int.tryParse(getValue(3, '0')) ?? 0,
+      minStock: int.tryParse(getValue(6, '0')) ?? 0,
+      location: getValue(9, 'Unknown'),
+      price: double.tryParse(getValue(5, '0.0')) ?? 0.0,
+      expiryDate: _parseDate(getValue(12, '')),
+      category: getValue(7, 'Unknown'),
+      unit: getValue(4, 'units'),
+      malayName: getValue(1, ''),
+      commonUses: getValue(8, ''),
+      supplier: getValue(10, ''),
+    );
+  }
+
+  DateTime _parseDate(String dateStr) {
+    try {
+      // Parse date in format DD/MM/YYYY
+      final parts = dateStr.split('/');
+      if (parts.length == 3) {
+        final day = int.parse(parts[0]);
+        final month = int.parse(parts[1]);
+        final year = int.parse(parts[2]);
+        return DateTime(year, month, day);
+      }
+    } catch (e) {
+      print('Error parsing date: $dateStr');
+    }
+    return DateTime.now().add(const Duration(days: 365)); // Default to 1 year from now
   }
 
   void _filterMedications(String query) {
@@ -167,9 +160,9 @@ class _MedicationScreenState extends State<MedicationScreen> {
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Medication Lookup 💊', style: TextStyle(fontSize: 18)),
+            const Text('Medication Lookup', style: TextStyle(fontSize: 18)),
             Text(
-              widget.clinic.name,
+              widget.clinic.clinicId == 'Clinic_Staff' ? 'Klinik Bandar Utama' : widget.clinic.name,
               style: const TextStyle(fontSize: 12, fontWeight: FontWeight.normal),
             ),
           ],
@@ -398,42 +391,39 @@ class _MedicationScreenState extends State<MedicationScreen> {
               ),
             ),
             const SizedBox(height: 4),
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: stockColor.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    '${med.stock} units',
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: stockColor,
-                      fontWeight: FontWeight.w600,
-                    ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                color: stockColor.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                '${med.stock} ${med.unit}',
+                style: TextStyle(
+                  fontSize: 11,
+                  color: stockColor,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            if (isNearExpiry) ...[
+              const SizedBox(height: 4),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: AppTheme.lightOrange,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  'Expires in $daysUntilExpiry days',
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: AppTheme.softOrange,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
-                const SizedBox(width: 8),
-                if (isNearExpiry)
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: AppTheme.lightOrange,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      'Expires in $daysUntilExpiry days',
-                      style: const TextStyle(
-                        fontSize: 11,
-                        color: AppTheme.softOrange,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-              ],
-            ),
+              ),
+            ],
           ],
         ),
         children: [
@@ -450,7 +440,7 @@ class _MedicationScreenState extends State<MedicationScreen> {
             valueColor: stockColor,
           ),
           const SizedBox(height: 8),
-          _buildInfoRow('Min Stock', '${med.minStock} units', Icons.warning_amber),
+          _buildInfoRow('Min Stock', '${med.minStock} ${med.unit}', Icons.warning_amber),
           const SizedBox(height: 8),
           _buildInfoRow('Price per unit', 'RM ${med.price.toStringAsFixed(2)}', Icons.attach_money),
           const SizedBox(height: 8),
@@ -460,6 +450,14 @@ class _MedicationScreenState extends State<MedicationScreen> {
             Icons.calendar_today,
             valueColor: isNearExpiry ? AppTheme.softOrange : null,
           ),
+          if (med.supplier.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            _buildInfoRow('Supplier', med.supplier, Icons.business),
+          ],
+          if (med.commonUses.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            _buildInfoRow('Uses', med.commonUses, Icons.healing),
+          ],
           const SizedBox(height: 12),
           if (med.stock < med.minStock)
             Container(
@@ -628,6 +626,10 @@ class Medication {
   final double price;
   final DateTime expiryDate;
   final String category;
+  final String unit;
+  final String malayName;
+  final String commonUses;
+  final String supplier;
 
   Medication({
     required this.name,
@@ -638,6 +640,10 @@ class Medication {
     required this.price,
     required this.expiryDate,
     required this.category,
+    required this.unit,
+    this.malayName = '',
+    this.commonUses = '',
+    this.supplier = '',
   });
 }
 

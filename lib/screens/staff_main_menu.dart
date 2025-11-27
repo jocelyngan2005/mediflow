@@ -4,6 +4,8 @@ import 'package:mediflow/widgets/menu_card.dart';
 import 'package:mediflow/screens/clinic_selection_screen.dart';
 import 'package:mediflow/screens/medication_screen.dart';
 import 'package:mediflow/screens/ai_assistant_staff_screen.dart';
+import 'package:mediflow/screens/staff_appointment_bookings_screen.dart';
+import 'package:mediflow/screens/staff_clinic_analytics_screen.dart';
 import 'package:mediflow/screens/login_screen.dart';
 
 class StaffMainMenu extends StatefulWidget {
@@ -28,6 +30,22 @@ class _StaffMainMenuState extends State<StaffMainMenu> {
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => MedicationScreen(clinic: widget.clinic),
+      ),
+    );
+  }
+
+  void _navigateToAppointmentBookings() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => StaffAppointmentBookingsScreen(clinic: widget.clinic),
+      ),
+    );
+  }
+
+  void _navigateToClinicAnalytics() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => StaffClinicAnalyticsScreen(clinic: widget.clinic),
       ),
     );
   }
@@ -214,7 +232,7 @@ class _StaffMainMenuState extends State<StaffMainMenu> {
                 crossAxisCount: 2,
                 crossAxisSpacing: 16,
                 mainAxisSpacing: 16,
-                childAspectRatio: 1.0,
+                childAspectRatio: 0.7,
                 children: [
                   MenuCard(
                     title: 'Medical Lookup',
@@ -230,8 +248,7 @@ class _StaffMainMenuState extends State<StaffMainMenu> {
                     icon: Icons.calendar_today,
                     color: AppTheme.softGreen,
                     backgroundColor: AppTheme.lightGreen,
-                    badge: 'Soon',
-                    onTap: () => _showComingSoon('Appointment Bookings'),
+                    onTap: _navigateToAppointmentBookings,
                   ),
                   MenuCard(
                     title: 'Clinic Analytics',
@@ -239,8 +256,7 @@ class _StaffMainMenuState extends State<StaffMainMenu> {
                     icon: Icons.analytics,
                     color: AppTheme.softOrange,
                     backgroundColor: AppTheme.lightOrange,
-                    badge: 'Soon',
-                    onTap: () => _showComingSoon('Clinic Analytics'),
+                    onTap: _navigateToClinicAnalytics,
                   ),
                 ],
               ),

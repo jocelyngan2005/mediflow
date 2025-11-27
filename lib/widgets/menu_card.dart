@@ -55,7 +55,7 @@ class MenuCard extends StatelessWidget {
                       size: 32,
                     ),
                   ),
-                  const Spacer(),
+                  const SizedBox(height: 24),
                   Text(
                     title,
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(

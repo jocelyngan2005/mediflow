@@ -1,0 +1,142 @@
+english_name,malay_name,generic_name,stock_quantity,unit,price_rm,reorder_level,category,common_uses,location,supplier,clinic,expiry_date
+Panadol,Panadol,Paracetamol,150,tablets,0.15,30,Pain Relief,Fever and headache / Demam dan sakit kepala,SHELF-A1,PharmaCare,Klinik Sri Hartamas,31/12/2025
+Painkiller,Ubat Sakit,Ibuprofen,85,tablets,0.25,20,Pain Relief,Body pain and inflammation / Sakit badan dan radang,SHELF-A1,MediSupply,Klinik Sri Hartamas,15/3/2026
+Cold & Flu Tablets,Ubat Selsema,Chlorpheniramine,65,tablets,0.12,15,Allergy,Itching and runny nose / Gatal-gatal dan selsema,SHELF-B2,AllergyMed,Klinik Sri Hartamas,30/11/2025
+Non-drowsy Allergy,Alahan Tak Mengantuk,Cetirizine,45,tablets,0.35,10,Allergy,Allergy without sleepiness / Alahan tanpa mengantuk,SHELF-B2,AllergyMed,Klinik Sri Hartamas,20/1/2026
+Antibiotics,Antibiotik,Amoxicillin,120,capsules,0.28,25,Antibiotic,Infection and fever / Jangkitan dan demam,SHELF-C3,BioPharm,Klinik Sri Hartamas,15/10/2025
+Diabetes Pills,Pil Kencing Manis,Metformin,95,tablets,0.18,20,Diabetes,Blood sugar control / Kawalan gula darah,SHELF-D4,DiabetoCare,Klinik Sri Hartamas,30/5/2026
+Blood Pressure Pills,Pil Darah Tinggi,Amlodipine,60,tablets,0.22,15,Blood Pressure,High blood pressure / Tekanan darah tinggi,SHELF-D4,CardioMed,Klinik Sri Hartamas,28/2/2026
+Asthma Inhaler,Inhaler Asma,Salbutamol,18,inhalers,8.5,5,Asthma,Breathing difficulty / Sesak nafas,SHELF-E5,RespiraCare,Klinik Sri Hartamas,30/9/2025
+Stomach Medicine,Ubat Gastrik,Omeprazole,75,capsules,0.45,15,Stomach,Heartburn and acidity / Pedih hulu hati,SHELF-F1,GastroMed,Klinik Sri Hartamas,15/4/2026
+Diarrhea Medicine,Ubat Cirit-birit,Loperamide,40,tablets,0.3,10,Diarrhea,Loose motion / Cirit-birit,SHELF-F1,GastroMed,Klinik Sri Hartamas,20/12/2025
+Cholesterol Pills,Pil Kolesterol,Simvastatin,55,tablets,0.38,12,Cholesterol,High cholesterol / Kolesterol tinggi,SHELF-D4,CardioMed,Klinik Sri Hartamas,10/3/2026
+Cough Syrup,Sirap Batuk,Dextromethorphan,2,bottles,4.2,5,Cough,Dry cough / Batuk kering,SHELF-G2,CoughCare,Klinik Sri Hartamas,31/8/2025
+Phlegm Syrup,Sirap Kahak,Guaifenesin,10,bottles,3.8,4,Cough,Cough with phlegm / Batuk berkahak,SHELF-G2,CoughCare,Klinik Sri Hartamas,15/11/2025
+ORS,Air Garam,Oral Rehydration Salt,25,sachets,1.5,8,Hydration,Dehydration / Kekeringan badan,SHELF-H3,HydraSupply,Klinik Sri Hartamas,30/6/2026
+Itching Cream,Krim Gatal,Hydrocortisone,8,tubes,5.8,3,Skin,Skin rash and itching / Ruam dan gatal-gatal,SHELF-I4,DermaCare,Klinik Sri Hartamas,25/10/2025
+Antiseptic Cream,Krim Luka,Povidone-iodine,15,tubes,3.2,5,First Aid,Wounds and cuts / Luka dan calar,SHELF-J5,FirstAid Inc,Klinik Sri Hartamas,15/7/2026
+Antacid,Ubat Pedih Hulu Hati,Calcium Carbonate,90,tablets,0.2,20,Stomach,Acid reflux / Asid perut,SHELF-F1,GastroMed,Klinik Sri Hartamas,31/1/2026
+Multivitamin,Multivitamin,Multivitamin Complex,110,tablets,0.4,25,Supplements,General health / Kesihatan umum,SHELF-K6,VitaSource,Klinik Sri Hartamas,15/12/2025
+Vitamin C,Vitamin C,Ascorbic Acid,3,tablets,0.25,20,Supplements,Immune system / Sistem imun,SHELF-K6,VitaSource,Klinik Sri Hartamas,30/11/2025
+Sleeping Pills,Pil Tidur,Diphenhydramine,35,tablets,0.28,8,Sleep Aid,Cannot sleep / Susah tidur,SHELF-L7,SleepWell,Klinik Sri Hartamas,14/2/2026
+Folic Acid,Asid Folik,Folic Acid,200,tablets,0.08,40,Pregnancy,For pregnant women / Untuk wanita hamil,SHELF-M8,MaternalCare,Klinik Sri Hartamas,31/8/2026
+Iron Pills,Pil Zat Besi,Ferrous Sulfate,65,tablets,0.15,15,Anemia,Low blood / Darah rendah,SHELF-M8,MaternalCare,Klinik Sri Hartamas,30/9/2025
+Eye Drops,Titis Mata,Artificial Tears,12,bottles,6.5,4,Eye Care,Dry eyes / Mata kering,SHELF-N9,VisionCare,Klinik Sri Hartamas,20/10/2025
+Nasal Spray,Semburan Hidung,Saline Spray,10,bottles,7.2,3,Nasal,Stuffy nose / Hidung tersumbat,SHELF-N9,VisionCare,Klinik Sri Hartamas,10/12/2025
+Aspirin,Aspirin,Acetylsalicylic Acid,40,tablets,0.16,10,Pain Relief,Mild pain and fever / Sakit ringan dan demam,SHELF-A1,PharmaCare,Klinik Sri Hartamas,5/4/2026
+Joint Pain Medicine,Ubat Sakit Sendi,Diclofenac,55,tablets,0.42,12,Pain Relief,Joint pain and swelling / Sakit sendi dan bengkak,SHELF-A1,MediSupply,Klinik Sri Hartamas,25/1/2026
+Probiotics,Probiotik,Lactobacillus,3,capsules,1.2,8,Digestive,Stomach problem / Masalah perut,SHELF-F1,GastroMed,Klinik Sri Hartamas,15/11/2025
+Worm Medicine,Ubat Cacing,Mebendazole,25,tablets,0.85,6,Deworming,Stomach worms / Cacing perut,SHELF-O10,ParasiteCare,Klinik Sri Hartamas,20/3/2026
+Betadine,Betadine,Povidone-iodine,6,bottles,8.8,2,Antiseptic,Wound cleaning / Pembersih luka,SHELF-J5,FirstAid Inc,Klinik Sri Hartamas,15/5/2026
+Diabetes Test Strip,Strip Ujian Kencing Manis,Test Strips,100,strips,1.2,30,Diabetes,Blood sugar test / Ujian gula darah,SHELF-P11,DiabetoCare,Klinik Sri Hartamas,31/12/2025
+Insulin Syringe,Picagari Insulin,Insulin Syringe,50,syringes,0.35,20,Diabetes,Insulin injection / Suntikan insulin,SHELF-P11,DiabetoCare,Klinik Sri Hartamas,30/6/2026
+Blood Pressure Monitor,Alat Tekanan Darah,BP Cuff,2,units,85,1,Monitoring,Check blood pressure / Periksa tekanan darah,SHELF-Q12,MediTech,Klinik Sri Hartamas,31/1/2027
+Thermometer,Termometer,Digital Thermometer,4,units,25,1,Monitoring,Check body temperature / Periksa suhu badan,SHELF-Q12,MediTech,Klinik Sri Hartamas,31/12/2026
+Face Mask,Topeng Muka,3-Ply Mask,200,pieces,0.8,50,PPE,Mouth and nose protection / Perlindungan mulut dan hidung,SHELF-R13,SafetyGear,Klinik Sri Hartamas,31/8/2026
+Medical Gloves,Sarung Tangan,Latex Gloves,150,pairs,0.25,40,PPE,Hand protection / Perlindungan tangan,SHELF-R13,SafetyGear,Klinik Sri Hartamas,15/10/2026
+Bandage,Pembalut,Crepe Bandage,25,rolls,3.5,8,First Aid,For wounds / Untuk luka,SHELF-J5,FirstAid Inc,Klinik Sri Hartamas,31/3/2027
+Plaster,Plaster,Adhesive Bandage,80,pieces,0.15,20,First Aid,Small cuts / Luka kecil,SHELF-J5,FirstAid Inc,Klinik Sri Hartamas,30/11/2026
+Gauze,Kasa,Sterile Gauze,30,packs,2.8,10,First Aid,Wound dressing / Balutan luka,SHELF-J5,FirstAid Inc,Klinik Sri Hartamas,30/9/2026
+Cotton,Kapas,Cotton Wool,12,packs,4.5,5,First Aid,Cleaning wounds / Pembersihan luka,SHELF-J5,FirstAid Inc,Klinik Sri Hartamas,31/7/2026
+Antiseptic Wipes,Tisu Antiseptik,Alcohol Wipes,45,packs,1.2,15,First Aid,Skin cleaning / Pembersihan kulit,SHELF-J5,FirstAid Inc,Klinik Sri Hartamas,31/12/2025
+Calamine Lotion,Losyen Kalamin,Calamine,7,bottles,6.8,2,Skin,Rashes and itching / Ruam dan gatal-gatal,SHELF-I4,DermaCare,Klinik Sri Hartamas,28/2/2026
+Vaseline,Vaseline,Petroleum Jelly,9,tubs,3.5,3,Skin Care,Dry skin / Kulit kering,SHELF-I4,DermaCare,Klinik Sri Hartamas,15/4/2026
+Antifungal Cream,Krim Kulat,Clotrimazole,11,tubes,7.5,4,Skin,Fungal infection / Jangkitan kulat,SHELF-I4,DermaCare,Klinik Sri Hartamas,30/11/2025
+First Aid Kit,Kit Kecemasan,First Aid Kit,3,kits,45,1,First Aid,Emergency use / Untuk kecemasan,SHELF-J5,FirstAid Inc,Klinik Sri Hartamas,31/12/2026
+Muscle Pain,Semburan Sakit Otot,Methyl Salicylate,8,bottles,12.5,3,Pain Relief,Muscle pain and sprain / Sakit otot dan terseliuh,SHELF-A1,MediSupply,Klinik Sri Hartamas,31/1/2026
+Throat Lozenges,Ubat Tekak,Benzocaine,45,lozenges,0.4,10,Throat,Sore throat / Sakit tekak,SHELF-S14,ColdCare,Klinik Sri Hartamas,15/12/2025
+Baby Fever Medicine,Ubat Demam Kanak-kanak,Paracetamol Suspension,15,bottles,8.8,5,Pediatric,Children's fever / Demam kanak-kanak,SHELF-T15,PediatricCare,Klinik Sri Hartamas,30/11/2025
+Panadol,Panadol,Paracetamol,100,tablets,0.15,30,Pain Relief,Fever and headache / Demam dan sakit kepala,SHELF-A1,PharmaCare,Klinik Desa Jaya,31/12/2025
+Painkiller,Ubat Sakit,Ibuprofen,80,tablets,0.25,20,Pain Relief,Body pain and inflammation / Sakit badan dan radang,SHELF-A1,MediSupply,Klinik Desa Jaya,15/3/2026
+Cold & Flu Tablets,Ubat Selsema,Chlorpheniramine,50,tablets,0.12,15,Allergy,Itching and runny nose / Gatal-gatal dan selsema,SHELF-B2,AllergyMed,Klinik Desa Jaya,30/11/2025
+Non-drowsy Allergy,Alahan Tak Mengantuk,Cetirizine,66,tablets,0.35,10,Allergy,Allergy without sleepiness / Alahan tanpa mengantuk,SHELF-B2,AllergyMed,Klinik Desa Jaya,20/1/2026
+Antibiotics,Antibiotik,Amoxicillin,59,capsules,0.28,25,Antibiotic,Infection and fever / Jangkitan dan demam,SHELF-C3,BioPharm,Klinik Desa Jaya,15/10/2025
+Diabetes Pills,Pil Kencing Manis,Metformin,56,tablets,0.18,20,Diabetes,Blood sugar control / Kawalan gula darah,SHELF-D4,DiabetoCare,Klinik Desa Jaya,30/5/2026
+Blood Pressure Pills,Pil Darah Tinggi,Amlodipine,80,tablets,0.22,15,Blood Pressure,High blood pressure / Tekanan darah tinggi,SHELF-D4,CardioMed,Klinik Desa Jaya,28/2/2026
+Asthma Inhaler,Inhaler Asma,Salbutamol,10,inhalers,8.5,5,Asthma,Breathing difficulty / Sesak nafas,SHELF-E5,RespiraCare,Klinik Desa Jaya,30/9/2025
+Stomach Medicine,Ubat Gastrik,Omeprazole,56,capsules,0.45,15,Stomach,Heartburn and acidity / Pedih hulu hati,SHELF-F1,GastroMed,Klinik Desa Jaya,15/4/2026
+Diarrhea Medicine,Ubat Cirit-birit,Loperamide,44,tablets,0.3,10,Diarrhea,Loose motion / Cirit-birit,SHELF-F1,GastroMed,Klinik Desa Jaya,20/12/2025
+Cholesterol Pills,Pil Kolesterol,Simvastatin,33,tablets,0.38,12,Cholesterol,High cholesterol / Kolesterol tinggi,SHELF-D4,CardioMed,Klinik Desa Jaya,10/3/2026
+Cough Syrup,Sirap Batuk,Dextromethorphan,22,bottles,4.2,5,Cough,Dry cough / Batuk kering,SHELF-G2,CoughCare,Klinik Desa Jaya,31/8/2025
+Phlegm Syrup,Sirap Kahak,Guaifenesin,11,bottles,3.8,4,Cough,Cough with phlegm / Batuk berkahak,SHELF-G2,CoughCare,Klinik Desa Jaya,15/11/2025
+ORS,Air Garam,Oral Rehydration Salt,27,sachets,1.5,8,Hydration,Dehydration / Kekeringan badan,SHELF-H3,HydraSupply,Klinik Desa Jaya,30/6/2026
+Itching Cream,Krim Gatal,Hydrocortisone,5,tubes,5.8,3,Skin,Skin rash and itching / Ruam dan gatal-gatal,SHELF-I4,DermaCare,Klinik Desa Jaya,25/10/2025
+Antiseptic Cream,Krim Luka,Povidone-iodine,20,tubes,3.2,5,First Aid,Wounds and cuts / Luka dan calar,SHELF-J5,FirstAid Inc,Klinik Desa Jaya,15/7/2026
+Antacid,Ubat Pedih Hulu Hati,Calcium Carbonate,87,tablets,0.2,20,Stomach,Acid reflux / Asid perut,SHELF-F1,GastroMed,Klinik Desa Jaya,31/1/2026
+Multivitamin,Multivitamin,Multivitamin Complex,116,tablets,0.4,25,Supplements,General health / Kesihatan umum,SHELF-K6,VitaSource,Klinik Desa Jaya,15/12/2025
+Vitamin C,Vitamin C,Ascorbic Acid,65,tablets,0.25,20,Supplements,Immune system / Sistem imun,SHELF-K6,VitaSource,Klinik Desa Jaya,30/11/2025
+Sleeping Pills,Pil Tidur,Diphenhydramine,24,tablets,0.28,8,Sleep Aid,Cannot sleep / Susah tidur,SHELF-L7,SleepWell,Klinik Desa Jaya,14/2/2026
+Folic Acid,Asid Folik,Folic Acid,180,tablets,0.08,40,Pregnancy,For pregnant women / Untuk wanita hamil,SHELF-M8,MaternalCare,Klinik Desa Jaya,31/8/2026
+Iron Pills,Pil Zat Besi,Ferrous Sulfate,76,tablets,0.15,15,Anemia,Low blood / Darah rendah,SHELF-M8,MaternalCare,Klinik Desa Jaya,30/9/2025
+Eye Drops,Titis Mata,Artificial Tears,10,bottles,6.5,4,Eye Care,Dry eyes / Mata kering,SHELF-N9,VisionCare,Klinik Desa Jaya,20/10/2025
+Nasal Spray,Semburan Hidung,Saline Spray,8,bottles,7.2,3,Nasal,Stuffy nose / Hidung tersumbat,SHELF-N9,VisionCare,Klinik Desa Jaya,10/12/2025
+Aspirin,Aspirin,Acetylsalicylic Acid,35,tablets,0.16,10,Pain Relief,Mild pain and fever / Sakit ringan dan demam,SHELF-A1,PharmaCare,Klinik Desa Jaya,5/4/2026
+Joint Pain Medicine,Ubat Sakit Sendi,Diclofenac,55,tablets,0.42,12,Pain Relief,Joint pain and swelling / Sakit sendi dan bengkak,SHELF-A1,MediSupply,Klinik Desa Jaya,25/1/2026
+Probiotics,Probiotik,Lactobacillus,24,capsules,1.2,8,Digestive,Stomach problem / Masalah perut,SHELF-F1,GastroMed,Klinik Desa Jaya,15/11/2025
+Worm Medicine,Ubat Cacing,Mebendazole,25,tablets,0.85,6,Deworming,Stomach worms / Cacing perut,SHELF-O10,ParasiteCare,Klinik Desa Jaya,20/3/2026
+Betadine,Betadine,Povidone-iodine,6,bottles,8.8,2,Antiseptic,Wound cleaning / Pembersih luka,SHELF-J5,FirstAid Inc,Klinik Desa Jaya,15/5/2026
+Diabetes Test Strip,Strip Ujian Kencing Manis,Test Strips,70,strips,1.2,30,Diabetes,Blood sugar test / Ujian gula darah,SHELF-P11,DiabetoCare,Klinik Desa Jaya,31/12/2025
+Insulin Syringe,Picagari Insulin,Insulin Syringe,50,syringes,0.35,20,Diabetes,Insulin injection / Suntikan insulin,SHELF-P11,DiabetoCare,Klinik Desa Jaya,30/6/2026
+Blood Pressure Monitor,Alat Tekanan Darah,BP Cuff,2,units,85,1,Monitoring,Check blood pressure / Periksa tekanan darah,SHELF-Q12,MediTech,Klinik Desa Jaya,31/1/2027
+Thermometer,Termometer,Digital Thermometer,4,units,25,1,Monitoring,Check body temperature / Periksa suhu badan,SHELF-Q12,MediTech,Klinik Desa Jaya,31/12/2026
+Face Mask,Topeng Muka,3-Ply Mask,344,pieces,0.8,50,PPE,Mouth and nose protection / Perlindungan mulut dan hidung,SHELF-R13,SafetyGear,Klinik Desa Jaya,31/8/2026
+Medical Gloves,Sarung Tangan,Latex Gloves,150,pairs,0.25,40,PPE,Hand protection / Perlindungan tangan,SHELF-R13,SafetyGear,Klinik Desa Jaya,15/10/2026
+Bandage,Pembalut,Crepe Bandage,25,rolls,3.5,8,First Aid,For wounds / Untuk luka,SHELF-J5,FirstAid Inc,Klinik Desa Jaya,31/3/2027
+Plaster,Plaster,Adhesive Bandage,80,pieces,0.15,20,First Aid,Small cuts / Luka kecil,SHELF-J5,FirstAid Inc,Klinik Desa Jaya,30/11/2026
+Gauze,Kasa,Sterile Gauze,30,packs,2.8,10,First Aid,Wound dressing / Balutan luka,SHELF-J5,FirstAid Inc,Klinik Desa Jaya,30/9/2026
+Cotton,Kapas,Cotton Wool,12,packs,4.5,5,First Aid,Cleaning wounds / Pembersihan luka,SHELF-J5,FirstAid Inc,Klinik Desa Jaya,31/7/2026
+Antiseptic Wipes,Tisu Antiseptik,Alcohol Wipes,45,packs,1.2,15,First Aid,Skin cleaning / Pembersihan kulit,SHELF-J5,FirstAid Inc,Klinik Desa Jaya,31/12/2025
+Calamine Lotion,Losyen Kalamin,Calamine,7,bottles,6.8,2,Skin,Rashes and itching / Ruam dan gatal-gatal,SHELF-I4,DermaCare,Klinik Desa Jaya,28/2/2026
+Vaseline,Vaseline,Petroleum Jelly,9,tubs,3.5,3,Skin Care,Dry skin / Kulit kering,SHELF-I4,DermaCare,Klinik Desa Jaya,15/4/2026
+Antifungal Cream,Krim Kulat,Clotrimazole,10,tubes,7.5,4,Skin,Fungal infection / Jangkitan kulat,SHELF-I4,DermaCare,Klinik Desa Jaya,30/11/2025
+First Aid Kit,Kit Kecemasan,First Aid Kit,3,kits,45,1,First Aid,Emergency use / Untuk kecemasan,SHELF-J5,FirstAid Inc,Klinik Desa Jaya,31/12/2026
+Muscle Pain Spray,Semburan Sakit Otot,Methyl Salicylate,8,bottles,12.5,3,Pain Relief,Muscle pain and sprain / Sakit otot dan terseliuh,SHELF-A1,MediSupply,Klinik Desa Jaya,31/1/2026
+Throat Lozenges,Ubat Tekak,Benzocaine,45,lozenges,0.4,10,Throat,Sore throat / Sakit tekak,SHELF-S14,ColdCare,Klinik Desa Jaya,15/12/2025
+Baby Fever Medicine,Ubat Demam Kanak-kanak,Paracetamol Suspension,2,bottles,8.8,5,Pediatric,Children's fever / Demam kanak-kanak,SHELF-T15,PediatricCare,Klinik Desa Jaya,30/11/2025
+Panadol,Panadol,Paracetamol,100,tablets,0.15,30,Pain Relief,Fever and headache / Demam dan sakit kepala,SHELF-A1,PharmaCare,Klinik Bandar Utama,31/12/2025
+Painkiller,Ubat Sakit,Ibuprofen,80,tablets,0.25,20,Pain Relief,Body pain and inflammation / Sakit badan dan radang,SHELF-A1,MediSupply,Klinik Bandar Utama,15/3/2026
+Cold & Flu Tablets,Ubat Selsema,Chlorpheniramine,50,tablets,0.12,15,Allergy,Itching and runny nose / Gatal-gatal dan selsema,SHELF-B2,AllergyMed,Klinik Bandar Utama,30/11/2025
+Non-drowsy Allergy,Alahan Tak Mengantuk,Cetirizine,66,tablets,0.35,10,Allergy,Allergy without sleepiness / Alahan tanpa mengantuk,SHELF-B2,AllergyMed,Klinik Bandar Utama,20/1/2026
+Antibiotics,Antibiotik,Amoxicillin,59,capsules,0.28,25,Antibiotic,Infection and fever / Jangkitan dan demam,SHELF-C3,BioPharm,Klinik Bandar Utama,15/10/2025
+Diabetes Pills,Pil Kencing Manis,Metformin,56,tablets,0.18,20,Diabetes,Blood sugar control / Kawalan gula darah,SHELF-D4,DiabetoCare,Klinik Bandar Utama,30/5/2026
+Blood Pressure Pills,Pil Darah Tinggi,Amlodipine,80,tablets,0.22,15,Blood Pressure,High blood pressure / Tekanan darah tinggi,SHELF-D4,CardioMed,Klinik Bandar Utama,28/2/2026
+Asthma Inhaler,Inhaler Asma,Salbutamol,10,inhalers,8.5,5,Asthma,Breathing difficulty / Sesak nafas,SHELF-E5,RespiraCare,Klinik Bandar Utama,30/9/2025
+Stomach Medicine,Ubat Gastrik,Omeprazole,56,capsules,0.45,15,Stomach,Heartburn and acidity / Pedih hulu hati,SHELF-F1,GastroMed,Klinik Bandar Utama,15/4/2026
+Diarrhea Medicine,Ubat Cirit-birit,Loperamide,44,tablets,0.3,10,Diarrhea,Loose motion / Cirit-birit,SHELF-F1,GastroMed,Klinik Bandar Utama,20/12/2025
+Cholesterol Pills,Pil Kolesterol,Simvastatin,33,tablets,0.38,12,Cholesterol,High cholesterol / Kolesterol tinggi,SHELF-D4,CardioMed,Klinik Bandar Utama,10/3/2026
+Cough Syrup,Sirap Batuk,Dextromethorphan,22,bottles,4.2,5,Cough,Dry cough / Batuk kering,SHELF-G2,CoughCare,Klinik Bandar Utama,31/8/2025
+Phlegm Syrup,Sirap Kahak,Guaifenesin,1,bottles,3.8,4,Cough,Cough with phlegm / Batuk berkahak,SHELF-G2,CoughCare,Klinik Bandar Utama,15/11/2025
+ORS,Air Garam,Oral Rehydration Salt,27,sachets,1.5,8,Hydration,Dehydration / Kekeringan badan,SHELF-H3,HydraSupply,Klinik Bandar Utama,30/6/2026
+Itching Cream,Krim Gatal,Hydrocortisone,5,tubes,5.8,3,Skin,Skin rash and itching / Ruam dan gatal-gatal,SHELF-I4,DermaCare,Klinik Bandar Utama,25/10/2025
+Antiseptic Cream,Krim Luka,Povidone-iodine,20,tubes,3.2,5,First Aid,Wounds and cuts / Luka dan calar,SHELF-J5,FirstAid Inc,Klinik Bandar Utama,15/7/2026
+Antacid,Ubat Pedih Hulu Hati,Calcium Carbonate,87,tablets,0.2,20,Stomach,Acid reflux / Asid perut,SHELF-F1,GastroMed,Klinik Bandar Utama,31/1/2026
+Multivitamin,Multivitamin,Multivitamin Complex,116,tablets,0.4,25,Supplements,General health / Kesihatan umum,SHELF-K6,VitaSource,Klinik Bandar Utama,15/12/2025
+Vitamin C,Vitamin C,Ascorbic Acid,65,tablets,0.25,20,Supplements,Immune system / Sistem imun,SHELF-K6,VitaSource,Klinik Bandar Utama,30/11/2025
+Sleeping Pills,Pil Tidur,Diphenhydramine,24,tablets,0.28,8,Sleep Aid,Cannot sleep / Susah tidur,SHELF-L7,SleepWell,Klinik Bandar Utama,14/2/2026
+Folic Acid,Asid Folik,Folic Acid,180,tablets,0.08,40,Pregnancy,For pregnant women / Untuk wanita hamil,SHELF-M8,MaternalCare,Klinik Bandar Utama,31/8/2026
+Iron Pills,Pil Zat Besi,Ferrous Sulfate,76,tablets,0.15,15,Anemia,Low blood / Darah rendah,SHELF-M8,MaternalCare,Klinik Bandar Utama,30/9/2025
+Eye Drops,Titis Mata,Artificial Tears,10,bottles,6.5,4,Eye Care,Dry eyes / Mata kering,SHELF-N9,VisionCare,Klinik Bandar Utama,20/10/2025
+Nasal Spray,Semburan Hidung,Saline Spray,8,bottles,7.2,3,Nasal,Stuffy nose / Hidung tersumbat,SHELF-N9,VisionCare,Klinik Bandar Utama,10/12/2025
+Aspirin,Aspirin,Acetylsalicylic Acid,35,tablets,0.16,10,Pain Relief,Mild pain and fever / Sakit ringan dan demam,SHELF-A1,PharmaCare,Klinik Bandar Utama,5/4/2026
+Joint Pain Medicine,Ubat Sakit Sendi,Diclofenac,55,tablets,0.42,12,Pain Relief,Joint pain and swelling / Sakit sendi dan bengkak,SHELF-A1,MediSupply,Klinik Bandar Utama,25/1/2026
+Probiotics,Probiotik,Lactobacillus,5,capsules,1.2,8,Digestive,Stomach problem / Masalah perut,SHELF-F1,GastroMed,Klinik Bandar Utama,15/11/2025
+Worm Medicine,Ubat Cacing,Mebendazole,25,tablets,0.85,6,Deworming,Stomach worms / Cacing perut,SHELF-O10,ParasiteCare,Klinik Bandar Utama,20/3/2026
+Betadine,Betadine,Povidone-iodine,6,bottles,8.8,2,Antiseptic,Wound cleaning / Pembersih luka,SHELF-J5,FirstAid Inc,Klinik Bandar Utama,15/5/2026
+Diabetes Test Strip,Strip Ujian Kencing Manis,Test Strips,70,strips,1.2,30,Diabetes,Blood sugar test / Ujian gula darah,SHELF-P11,DiabetoCare,Klinik Bandar Utama,31/12/2025
+Insulin Syringe,Picagari Insulin,Insulin Syringe,50,syringes,0.35,20,Diabetes,Insulin injection / Suntikan insulin,SHELF-P11,DiabetoCare,Klinik Bandar Utama,30/6/2026
+Blood Pressure Monitor,Alat Tekanan Darah,BP Cuff,2,units,85,1,Monitoring,Check blood pressure / Periksa tekanan darah,SHELF-Q12,MediTech,Klinik Bandar Utama,31/1/2027
+Thermometer,Termometer,Digital Thermometer,4,units,25,1,Monitoring,Check body temperature / Periksa suhu badan,SHELF-Q12,MediTech,Klinik Bandar Utama,31/12/2026
+Face Mask,Topeng Muka,3-Ply Mask,344,pieces,0.8,50,PPE,Mouth and nose protection / Perlindungan mulut dan hidung,SHELF-R13,SafetyGear,Klinik Bandar Utama,31/8/2026
+Medical Gloves,Sarung Tangan,Latex Gloves,150,pairs,0.25,40,PPE,Hand protection / Perlindungan tangan,SHELF-R13,SafetyGear,Klinik Bandar Utama,15/10/2026
+Bandage,Pembalut,Crepe Bandage,25,rolls,3.5,8,First Aid,For wounds / Untuk luka,SHELF-J5,FirstAid Inc,Klinik Bandar Utama,31/3/2027
+Plaster,Plaster,Adhesive Bandage,80,pieces,0.15,20,First Aid,Small cuts / Luka kecil,SHELF-J5,FirstAid Inc,Klinik Bandar Utama,30/11/2026
+Gauze,Kasa,Sterile Gauze,30,packs,2.8,10,First Aid,Wound dressing / Balutan luka,SHELF-J5,FirstAid Inc,Klinik Bandar Utama,30/9/2026
+Cotton,Kapas,Cotton Wool,12,packs,4.5,5,First Aid,Cleaning wounds / Pembersihan luka,SHELF-J5,FirstAid Inc,Klinik Bandar Utama,31/7/2026
+Antiseptic Wipes,Tisu Antiseptik,Alcohol Wipes,45,packs,1.2,15,First Aid,Skin cleaning / Pembersihan kulit,SHELF-J5,FirstAid Inc,Klinik Bandar Utama,31/12/2025
+Calamine Lotion,Losyen Kalamin,Calamine,7,bottles,6.8,2,Skin,Rashes and itching / Ruam dan gatal-gatal,SHELF-I4,DermaCare,Klinik Bandar Utama,28/2/2026
+Vaseline,Vaseline,Petroleum Jelly,9,tubs,3.5,3,Skin Care,Dry skin / Kulit kering,SHELF-I4,DermaCare,Klinik Bandar Utama,15/4/2026
+Antifungal Cream,Krim Kulat,Clotrimazole,10,tubes,7.5,4,Skin,Fungal infection / Jangkitan kulat,SHELF-I4,DermaCare,Klinik Bandar Utama,30/11/2025
+First Aid Kit,Kit Kecemasan,First Aid Kit,3,kits,45,1,First Aid,Emergency use / Untuk kecemasan,SHELF-J5,FirstAid Inc,Klinik Bandar Utama,31/12/2026
+Muscle Pain Spray,Semburan Sakit Otot,Methyl Salicylate,8,bottles,12.5,3,Pain Relief,Muscle pain and sprain / Sakit otot dan terseliuh,SHELF-A1,MediSupply,Klinik Bandar Utama,31/1/2026
+Throat Lozenges,Ubat Tekak,Benzocaine,45,lozenges,0.4,10,Throat,Sore throat / Sakit tekak,SHELF-S14,ColdCare,Klinik Bandar Utama,15/12/2025
+Baby Fever Medicine,Ubat Demam Kanak-kanak,Paracetamol Suspension,15,bottles,8.8,5,Pediatric,Children's fever / Demam kanak-kanak,SHELF-T15,PediatricCare,Klinik Bandar Utama,30/11/2025

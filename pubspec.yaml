@@ -38,6 +38,9 @@ dependencies:
   
   # HTTP client for API communication
   http: ^1.1.0
+  
+  # Chart library for analytics
+  fl_chart: ^0.68.0
 
 dev_dependencies:
   flutter_test:
