@@ -10,7 +10,7 @@ Track: Generative AI for Malaysian Industries with JamAI Base
 
 ## 💻 Submission 
 
-Demo Video: 
+Demo Video: https://www.canva.com/design/DAG54kXfSOc/OxRV3edYxUTe5T3BJF3K9A/watch?utm_content=DAG54kXfSOc&utm_campaign=designshare&utm_medium=link2&utm_source=uniquelinks&utlId=hdc37d9f2bd
 
 Presentation Slides: 
 
