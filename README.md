@@ -12,7 +12,7 @@ Track: Generative AI for Malaysian Industries with JamAI Base
 
 Demo Video: https://youtu.be/ZUqi9yQxCjs
 
-Presentation Slides: 
+Presentation Slides: https://www.canva.com/design/DAG54Gg0zvI/X2s_5fx169seR-azEL8ZBA/view?utm_content=DAG54Gg0zvI&utm_campaign=designshare&utm_medium=link2&utm_source=uniquelinks&utlId=he7f865ec1a
 
 ## 📌 Problem Statement 
 
