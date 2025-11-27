@@ -15,9 +15,14 @@ def get_clinic_name_from_id(clinic_id: str, clinic_name: str = None) -> str:
     
     # Default mapping - you may want to use a database lookup in production
     clinic_name_mapping = {
+        'clinic_001': 'Klinik Bandar Utama',
+        'clinic_002': 'Klinik Sri Hartamas',
+        'clinic_003': 'Klinik Desa Jaya',
+        'clinic_004': 'Klinik Famili Wangsa Maju',
+        # Legacy mappings for backward compatibility
         'klinik-bandar-utama': 'Klinik Bandar Utama',
         'klinik-sri-hartamas': 'Klinik Sri Hartamas', 
-        'klinik-desa-jaya': 'Pusat Kesihatan Setapak',
+        'klinik-desa-jaya': 'Klinik Desa Jaya',
         'klinik-wangsa': 'Klinik Famili Wangsa Maju',
         # Add more mappings as needed
     }

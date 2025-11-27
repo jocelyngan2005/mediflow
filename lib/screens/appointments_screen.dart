@@ -870,41 +870,47 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> with TickerProv
           ),
           const SizedBox(height: 12),
           
-          // AI Recommendation Banner
-          if (_recommendedTime != null && _recommendedTime!['slot_found'] == true) ...[
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: AppTheme.lightBlue,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: AppTheme.primaryBlue,
-                  width: 1,
-                ),
-              ),
-              child: Row(
+          // Make the content scrollable
+          Expanded(
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(
-                    Icons.smart_toy_rounded,
-                    color: AppTheme.primaryBlue,
-                    size: 20,
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'AI recommends: ${_recommendedTime!['display_date']} at ${_recommendedTime!['display_time']} with ${_recommendedTime!['doctor']}',
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: AppTheme.primaryBlue,
+                  // AI Recommendation Banner
+                  if (_recommendedTime != null && (_recommendedTime!['slot_found'] == true || _recommendedTime!.containsKey('display_date'))) ...[
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: AppTheme.lightBlue,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: AppTheme.primaryBlue,
+                          width: 1,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.smart_toy_rounded,
+                            color: AppTheme.primaryBlue,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'AI recommends: ${_recommendedTime!['display_date']} at ${_recommendedTime!['display_time']} with ${_recommendedTime!['doctor']}',
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: AppTheme.primaryBlue,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-          ],
+                    const SizedBox(height: 16),
+                  ],
           
           // Refined User Message Card
           if (_refinedUserMessage != null) ...[
@@ -990,20 +996,23 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> with TickerProv
             const SizedBox(height: 12),
           ],
           
-          // Available Time Slots
-          const Text(
-            'Available appointments:',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: AppTheme.darkText,
+                  // Available Time Slots
+                  const Text(
+                    'Available appointments:',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: AppTheme.darkText,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  
+                  // Time slots (no longer wrapped in Expanded)
+                  _buildAvailableTimeSlots(),
+                  const SizedBox(height: 20), // Add bottom padding
+                ],
+              ),
             ),
-          ),
-          const SizedBox(height: 12),
-          
-          // Scrollable time slots
-          Expanded(
-            child: _buildAvailableTimeSlots(),
           ),
         ],
       ),
@@ -1063,10 +1072,9 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> with TickerProv
       groupedSlots[date]!.add(slot);
     }
 
-    return ListView.builder(
-      itemCount: groupedSlots.keys.length,
-      itemBuilder: (context, index) {
-        String date = groupedSlots.keys.elementAt(index);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: groupedSlots.keys.map((date) {
         List<Map<String, dynamic>> daySlots = groupedSlots[date]!;
         
         return Container(
@@ -1087,7 +1095,7 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> with TickerProv
             ],
           ),
         );
-      },
+      }).toList(),
     );
   }
 

@@ -23,7 +23,7 @@ class _ClinicSelectionScreenState extends State<ClinicSelectionScreen> {
     Clinic(
       clinicId: 'clinic_001',
       name: 'Klinik Bandar Utama',
-      address: '191, Jalan Bandar Puteri Jaya 1/2, Bandar Puteri Jaya, 08000 Sungai Petani, Kedah',
+      address: 'Bandar Utama, Petaling Jaya',
       distance: '0.5km',
       hours: 'Wednesday 8:00am to 8:00pm',
       isOpen: true,
@@ -32,8 +32,8 @@ class _ClinicSelectionScreenState extends State<ClinicSelectionScreen> {
     ),
     Clinic(
       clinicId: 'clinic_002',
-      name: 'Klinik Dr. Ahmad',
-      address: 'Taman Desa, Kuala Lumpur',
+      name: 'Klinik Sri Hartamas',
+      address: 'Sri Hartamas, Kuala Lumpur',
       distance: '1.2km',
       hours: 'Mon-Sat: 9:00 AM - 9:00 PM',
       isOpen: true,
@@ -42,8 +42,8 @@ class _ClinicSelectionScreenState extends State<ClinicSelectionScreen> {
     ),
     Clinic(
       clinicId: 'clinic_003',
-      name: 'Pusat Kesihatan Setapak',
-      address: 'Setapak, Kuala Lumpur',
+      name: 'Klinik Desa Jaya',
+      address: 'Dasa Jaya',
       distance: '2.0km',
       hours: 'Mon-Sun: 24 Hours',
       isOpen: true,

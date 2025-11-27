@@ -36,13 +36,23 @@ class JamAIService:
             if response.rows and len(response.rows) > 0:
                 row = response.rows[0]
                 
-                # Access columns directly as in working test
-                available_time_slots = row.columns["available_time_slots"].text
-                case_type = row.columns["case_type"].text
-                recommended_time = row.columns["recommended_time"].text
-                refined_message = row.columns["refined_user_message"].text 
-                booking_record = row.columns.get("booking_record", {}).get("text", "{}")
+                # Safely access columns with a helper function and log issues
+                def get_col(name, default=""):
+                    if name not in row.columns:
+                        logger.warning(f"Column '{name}' not found in JamAI response.")
+                        return default
+                    return row.columns[name].text
+
+                available_time_slots = get_col("available_time_slots", "[]")
+                case_type = get_col("case_type", "{}")
+                recommended_time = get_col("recommended_time", "{}")
+                refined_message = get_col("refined_user_message", "Appointment processed")
+                booking_record = get_col("booking_record", "{}")
                 
+                # Log the retrieved values for debugging
+                logger.info(f"JamAI available_time_slots: {available_time_slots}")
+                logger.info(f"JamAI case_type: {case_type}")
+
                 return {
                     "available_time_slots": available_time_slots,
                     "case_type": case_type,
@@ -50,6 +60,8 @@ class JamAIService:
                     "refined_user_message": refined_message,
                     "booking_record": booking_record
                 }
+            else:
+                logger.warning("JamAI response contained no rows.")
                         
             return {
                 "available_time_slots": "[]",

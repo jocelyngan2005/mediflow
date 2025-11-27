@@ -96,7 +96,7 @@ class _StaffAssistantScreenState extends State<StaffAssistantScreen> with Ticker
 
     try {
       // Call the staff-specific medication lookup API
-      ApiResponse<StaffChatResponse> response = await ApiService.sendStaffChatMessage(
+      ApiResponse<Map<String, dynamic>> response = await ApiService.sendStaffChatMessage(
         clinicId: widget.clinic.clinicId,
         message: text,
         language: _currentLanguage,
@@ -105,10 +105,10 @@ class _StaffAssistantScreenState extends State<StaffAssistantScreen> with Ticker
       setState(() {
         if (response.success && response.data != null) {
           _messages.add(ChatMessage(
-            text: response.data!.reply,
+            text: response.data!['reply'] ?? 'No response',
             isUser: false,
             timestamp: DateTime.now(),
-            medicationData: response.data!.medicationData,
+            medicationData: response.data!['medications'],
           ));
         } else {
           // Show error message

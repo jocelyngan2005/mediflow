@@ -193,4 +193,34 @@ class ApiService {
       return ApiResponse.error('Network error: $e');
     }
   }
+
+  /// Send staff chat message for medication lookup
+  static Future<ApiResponse<Map<String, dynamic>>> sendStaffChatMessage({
+    required String clinicId,
+    required String message,
+    required String language,
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/staff/medication-lookup'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          'clinic_id': clinicId,
+          'query': message,
+          'language': language,
+          'secret_code': staffSecretCode,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        return ApiResponse.success(data);
+      } else {
+        final errorData = json.decode(response.body);
+        return ApiResponse.error(errorData['detail'] ?? 'Staff query failed');
+      }
+    } catch (e) {
+      return ApiResponse.error('Network error: $e');
+    }
+  }
 }
