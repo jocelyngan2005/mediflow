@@ -1,188 +1,266 @@
-# ClinicFlow+ 🏥
+# MediFlow 🏥
 
-**The Multilingual AI Nurse for Malaysia's Small Clinics**
+**Multi-Clinic AI Assistant App for Malaysians**
 
-A BM/English AI nurse assistant that helps small Malaysian clinics handle their overwhelming manual workload—FAQs, appointment triage, medicine availability checks, SOP lookup, and PDF searches.
+A BM/English AI nurse assistant that helps small Malaysian clinics handle their overwhelming manual workload—FAQs, appointment triage, medicine availability checks, SOP lookup, and PDF searches—using JamAI Base RAG + Action Tables on a simple mobile-first interface.
 
-## Features 🚀
+## Domain: Embedded LLM 🎯
 
-### Core Functionality
-- **AI FAQ Nurse** (BM/English) - Answers common clinic FAQs
-- **AI Appointment Triage** - Symptom-based appointment scheduling
-- **PDF & SOP Search** - Instant Q&A from KKM circulars and clinic SOPs
-- **Medication Quick Lookup** - Staff-only medication stock lookup
-- **Multilingual Support** - BM ⇄ English translation
+Track: Generative AI for Malaysian Industries with JamAI Base
 
-## UI Structure 📱
+## Submission 
 
-### 1️⃣ Splash Screen
-- Beautiful animated splash screen with app branding
-- Auto-navigates to onboarding after 3 seconds
+Demo Video: 
 
-### 2️⃣ Onboarding
-- Welcome message
-- Language selection (🇲🇾 BM | 🇬🇧 EN)
-- Location services setup
-- Swipeable pages with progress indicators
+Presentation Slides: 
 
-### 3️⃣ Login / Signup / Guest
-- Login (email/phone + password)
-- Signup (name, contact, optional health ID, password)
-- **Continue as Guest** (highlighted) - disables profile saving
+## 🎯 Target Users
 
-### 4️⃣ Clinic Selection
-- Map view toggle (placeholder)
-- Scrollable clinic cards with:
-  - Clinic name
-  - Address & distance
-  - Operating hours
-  - Open/Closed status
-  - "Select & Chat" button
+### **Patients**
+- Local Malaysian patients seeking convenient healthcare access
+- Foreign workers needing multilingual medical support
+- Walk-in patients requiring appointment booking and clinic information
+- Users wanting to check medication availability and clinic services
 
-### 5️⃣ Main Menu - Card Grid
-Large, tappable cards in 2x3 grid:
+### **Clinic Staff**
+- Front-desk staff managing appointments and patient inquiries
+- Medical assistants handling medication inventory
+- Healthcare workers requiring quick access to medical information
 
-| Card | Icon | Color | Purpose |
-|------|------|-------|---------|
-| **AI Nurse** | 🤖 | Blue | Chat with AI for FAQs |
-| **Appointments** | 📅 | Green | Symptom → urgency → slots |
-| **SOP Search** | 📄 | Orange | Q&A on PDFs & guidelines |
-| **Medication** | 💊 | Red | Staff-only stock lookup (PIN protected) |
-| **User Profile** | 👤 | Peach | Personal info, language, appointments |
+## Problem Statement 
 
-## Theme & Design 🎨
+Malaysia's small clinics face operational challenges:
 
-### Color Palette (Soft Pastels)
-- **Primary Blue**: `#6BA5E7` - Info & AI Nurse
-- **Soft Green**: `#9FD8A5` - Appointments
-- **Soft Orange**: `#FFB366` - SOP Search
-- **Soft Red**: `#FF8080` - Medication (Staff)
-- **Soft Peach**: `#FFB4A8` - Profile
-- **Background**: `#F8FAFB` - Light neutral
+**Patient Experience Issues:**
+- Long waiting times for basic inquiries
+- Language barriers for foreign workers
+- Difficulty booking appointments outside clinic hours
+- Lack of medication availability information
 
-### Design Features
-- ✨ Rounded corners (16-30px border radius)
-- 🎨 Soft pastel backgrounds
-- 📐 Card-based layouts
-- 🎭 Subtle shadows
-- 📱 Mobile-first responsive design
-- 🌊 Smooth animations
+**Staff Operational Burden:**
+- Overloaded front-desk staff with repetitive tasks
+- Manual appointment scheduling and management
+- Time-consuming medication inventory tracking
 
-## Project Structure 📂
+Small clinics can't afford expensive custom solutions, making MediFlow the perfect accessible alternative.
 
-```
-lib/
-├── main.dart                          # App entry point
-├── theme/
-│   └── app_theme.dart                 # Color scheme & theme
-├── screens/
-│   ├── splash_screen.dart             # Animated splash
-│   ├── onboarding_screen.dart         # Welcome & language selection
-│   ├── login_screen.dart              # Login/Signup/Guest
-│   ├── clinic_selection_screen.dart   # Clinic list & map
-│   └── main_menu_screen.dart          # Main card grid menu
-└── widgets/
-    ├── menu_card.dart                 # Reusable menu card component
-    └── clinic_card.dart               # Clinic info card component
-```
 
-## Getting Started 🏃
+## 🚀 Core Features
+
+### **1. AI FAQ Nurse (BM/English) 🤖**
+Answers common clinic FAQs using Knowledge Table (PDFs, clinic SOPs, service list).
+
+**RAG retrieval from:**
+- Clinic operating hours and contact information
+- Available treatments and medical services
+- Vaccine schedules and immunization programs
+- Medication availability (manual entries or CSV uploads)
+
+**Example Query (BM):**
+*"Klinik ni ada buat medical check up untuk kerja kilang tak?"*
+→ AI retrieves relevant information → summarizes → replies in Bahasa Malaysia
+
+### **2. AI Appointment Triage 📅**
+Patients describe symptoms → AI classifies urgency → proposes available appointment slots.
+*(Sorting patients based on clinic rules, not medical diagnosis)*
+
+**Process using Action Table:**
+- Understand patient symptoms and concerns
+- Fetch clinic SOP guidelines (e.g., fever protocols, cough management, injury procedures)
+- Suggest appropriate appointment categories (routine, urgent, emergency)
+- Check real-time slot availability
+- Draft appointment confirmation → user approval required
+
+### **3. PDF & SOP Search (KKM Circulars) 📄**
+Upload and search through important healthcare documents:
+
+e.g.
+- Immunisation Schedule
+- Clinic SOPs
+- Child Vaccination Guidelines
+- Dengue Management
+
+### **4. Medication Quick Lookup 💊**
+**Staff-only access** for inventory management:
+- *"Panadol stock tinggal berapa?"* (How much Panadol stock left?)
+- *"Do we have Chlorpheniramine available?"*
+- AI reads uploaded CSV files stored in Knowledge Table
+- **Access Control:** Patients blocked from accessing medication stock information
+
+### **5. Multilingual Support 🌐**
+**Seamless BM ⇄ English translation** throughout the application.
+
+**Particularly useful for:**
+- **Bangladeshi workers** seeking medical care
+- **Nepali workers** navigating healthcare services
+- **Elderly Malaysian patients** preferring Bahasa Malaysia
+- **Mixed-language consultations** and documentation
+
+### **Administrative Tools**
+- **📊 Staff Analytics Dashboard** - Performance metrics and operational insights
+- **🔐 Role-based Access Control** - Separate interfaces for patients vs. staff
+- **📱 Cross-platform Support** - Native iOS and Android applications
+- **☁️ JamAI Base Integration** - RAG-powered Knowledge and Action Tables
+
+
+## Deep Use of JamAI Base 🧠
+
+### **Knowledge Table**
+Stores comprehensive clinic information for RAG retrieval:
+
+- **Clinic FAQs + SOPs** - Standard operating procedures and frequently asked questions
+- **Treatment & Vaccine Information** - Available services and immunization schedules
+- **KKM PDF Circulars** - Ministry of Health guidelines and protocols
+- **Timetable CSV** - Appointment availability and scheduling data
+- **Medication CSV** - Drug inventory, pricing, and stock information
+
+**Process:** Queries → RAG → Summarized answers in preferred language
+
+### **Action Table (Multi-Step Reasoning)**
+Custom pipelines for complex clinic operations:
+
+#### **Action Chain: Appointment Booking**
+1. **Understand intent** - Parse patient symptoms and preferences
+2. **Fetch available time slots** - Query real-time appointment availability
+3. **Cross-check SOP** - Match case type with clinic protocols
+4. **Draft recommended time** - Suggest optimal appointment slot
+5. **Refine into BM/English** - Generate user-friendly message
+6. **Write final booking record** - Store appointment data (JSON format)
+
+#### **Action Chain: PDF/SOP Answering**
+1. **Parse question** - Understand healthcare query context
+2. **Retrieve relevant PDF segments** - Find matching document sections
+3. **Summarize with clinical-safe wording** - Ensure accurate medical information
+4. **Respond in preferred language** - Deliver answer in BM or English
+
+#### **Action Chain: Medication Lookup**
+1. **Interpret drug name** - Handle various medication name formats
+2. **Search medication CSV** - Query inventory database
+3. **Return stock, price, alternatives** - Comprehensive medication information
+
+
+## 🛠️ Tech Stack
+
+### **Frontend**
+- **Flutter** - Cross-platform mobile development framework
+- **BM/English Language Selector** - Built-in multilingual interface switching
+
+### **Backend**
+- **JamAI Base (Cloud)** - Managed AI infrastructure and RAG engine
+- **Python SDK** - Integration with JamAI Base services
+- **RAG Engine Components:**
+  - **Embeddings** - Vector representation of clinic documents and FAQs
+  - **Vector Search** - Semantic similarity matching for intelligent responses
+
+
+## 🚀 Setup Guide
 
 ### Prerequisites
-- Flutter SDK (3.9.0+)
-- Dart SDK (3.9.0+)
+- **Flutter SDK** (3.19.0+)
+- **Dart SDK** (3.3.0+)
+- **Python** (3.9+) - for backend development
 
-### Installation
+### 📱 Frontend Setup
 
-1. **Install dependencies**
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/jocelyngan2005/mediflow.git
+   cd mediflow
+   ```
+
+2. **Install Flutter dependencies**
    ```bash
    flutter pub get
    ```
 
-2. **Run the app**
+3. **Run the mobile app**
    ```bash
+   # Development mode with hot reload
    flutter run
+   
+   # Run on specific platform
+   flutter run -d android    # Android device/emulator
+   flutter run -d ios        # iOS simulator/device
    ```
 
-3. **Build for production**
+4. **Build for production**
    ```bash
-   # Android
+   # Android APK
    flutter build apk --release
    
-   # iOS
+   # Android App Bundle (Play Store)
+   flutter build appbundle --release
+   
+   # iOS (requires Xcode)
    flutter build ios --release
    ```
 
-## Features Implementation Status ✅
+### 🖥️ Backend Setup
 
-### ✅ Completed (UI)
-- [x] Splash screen with animation
-- [x] Onboarding flow with language selection
-- [x] Login/Signup/Guest authentication
-- [x] Clinic selection with list view
-- [x] Main menu with card-based navigation
-- [x] Staff PIN protection for medication
-- [x] Guest mode indicators
-- [x] Soft pastel theme
+1. **Navigate to backend directory**
+   ```bash
+   cd backend
+   ```
 
-### 🚧 To Be Implemented (Backend)
-- [ ] JamAI Base RAG integration
-- [ ] Knowledge Table for PDFs & SOPs
-- [ ] Action Table for appointment triage
-- [ ] Multilingual AI chat (BM/English)
-- [ ] Map view integration
-- [ ] Medication CSV lookup
-- [ ] User authentication backend
-- [ ] Profile persistence
-- [ ] Real-time appointment booking
+2. **Create and activate virtual environment**
+   ```bash
+   python -m venv venv
+   
+   # Windows
+   venv\Scripts\activate
+   
+   # macOS/Linux
+   source venv/bin/activate
+   ```
 
-## Development Notes 📝
+3. **Install Python dependencies**
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-### Testing Guest Mode
-- Click "Continue as Guest" on login screen
-- Guest mode shows warning banner on clinic selection
-- Profile screen prompts login
+4. **Set up environment variables**
+   ```bash
+   # Create .env file with required variables
+   cp .env.example .env
+   # Edit .env with your configuration
+   ```
 
-### Testing Staff Authentication
-- Click "Medication" card on main menu
-- Enter PIN: `1234` (demo PIN)
-- Real implementation will use secure staff authentication
+5. **Run the backend server**
+   ```bash
+   uvicorn app.main:app --reload --host 0.0.0.0 --port 8080
+   ```
 
-### Customization
-- Edit colors in `lib/theme/app_theme.dart`
-- Modify clinic data in `lib/screens/clinic_selection_screen.dart`
-- Add new menu cards in `lib/screens/main_menu_screen.dart`
+## 🤝 Contributing
 
-## Design Inspiration 🎨
+We welcome contributions from the community! Here's how you can help improve MediFlow:
 
-The UI follows modern mobile app design principles with:
-- **Soft, friendly colors** for healthcare environment
-- **Large, tappable targets** for accessibility
-- **Clear visual hierarchy** with cards and spacing
-- **Consistent iconography** from Material Design
-- **Smooth transitions** for better UX
+### **How to Contribute**
+1. **Fork the repository** on GitHub
+2. **Create a feature branch** (`git checkout -b feature/amazing-feature`)
+3. **Make your changes** and ensure code quality
+4. **Test thoroughly** - Add tests for new features
+5. **Commit your changes** (`git commit -m 'Add amazing feature'`)
+6. **Push to your branch** (`git push origin feature/amazing-feature`)
+7. **Open a Pull Request** with a detailed description
 
-## Next Steps 🔜
+### **Development Guidelines**
+- Follow Flutter/Dart best practices and style guidelines
+- Ensure all new features have appropriate test coverage
+- Update documentation for any new features or changes
+- Test multilingual support (BM/English) for UI changes
+- Verify compatibility across iOS and Android platforms
 
-1. **Backend Integration**
-   - Set up JamAI Base RAG
-   - Create Knowledge Tables for clinic data
-   - Implement Action Tables for triage
+### **Areas for Contribution**
+- **🌐 Localization** - Additional language support beyond BM/English
+- **🎨 UI/UX Improvements** - Enhanced user experience and accessibility
+- **🔧 Backend Integration** - API optimizations and new endpoints
+- **📊 Analytics Features** - Additional reporting and dashboard capabilities
+- **🧪 Testing** - Unit tests, integration tests, and automated testing
+- **📱 Platform Features** - iOS/Android specific optimizations
 
-2. **AI Features**
-   - Connect to multilingual AI model
-   - Implement chat interface
-   - Add voice input support
+## 📄 License
 
-3. **Map Integration**
-   - Google Maps / OpenStreetMap
-   - Clinic location markers
-   - Distance calculation
-
-4. **Real Authentication**
-   - Firebase / Supabase integration
-   - Secure user data storage
-   - Staff role management
+This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
 
 ---
 
