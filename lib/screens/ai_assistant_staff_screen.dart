@@ -62,10 +62,11 @@ class _StaffAssistantScreenState extends State<StaffAssistantScreen> with Ticker
     });
     
     // Welcome message for staff
+    String clinicDisplayName = widget.clinic.clinicId == 'Clinic_Staff' ? 'Klinik Bandar Utama' : widget.clinic.name;
     _messages.add(ChatMessage(
       text: _currentLanguage == 'BM'
-          ? 'Selamat datang, Kakitangan ${widget.clinic.name}! 👨‍⚕️\n\nSaya Staff AI Assistant anda. Saya boleh membantu dengan:\n• Carian stock ubat & ketersediaan\n• Harga ubat semasa\n• Ubat alternatif yang tersedia\n• Amaran stock rendah\n• Maklumat inventori klinik\n\nContoh: "Panadol stock tinggal berapa?" atau "Do we have Chlorpheniramine?"\n\nApa yang anda ingin semak?'
-          : 'Welcome, ${widget.clinic.name} Staff! 👨‍⚕️\n\nI\'m your Staff AI Assistant. I can help with:\n• Medication stock & availability lookup\n• Current drug pricing\n• Available alternatives\n• Low stock alerts\n• Clinic inventory information\n\nExample: "Panadol stock tinggal berapa?" or "Do we have Chlorpheniramine?"\n\nWhat would you like to check?',
+          ? 'Selamat datang, Kakitangan $clinicDisplayName! 👨‍⚕️\n\nSaya Staff AI Assistant anda. Saya boleh membantu dengan:\n• Carian stock ubat & ketersediaan\n• Harga ubat semasa\n• Ubat alternatif yang tersedia\n• Amaran stock rendah\n• Maklumat inventori klinik\n\nContoh: "Panadol stock tinggal berapa?" atau "Do we have Chlorpheniramine?"\n\nApa yang anda ingin semak?'
+          : 'Welcome, $clinicDisplayName Staff! 👨‍⚕️\n\nI\'m your Staff AI Assistant. I can help with:\n• Medication stock & availability lookup\n• Current drug pricing\n• Available alternatives\n• Low stock alerts\n• Clinic inventory information\n\nExample: "Panadol stock tinggal berapa?" or "Do we have Chlorpheniramine?"\n\nWhat would you like to check?',
       isUser: false,
       timestamp: DateTime.now(),
     ));
@@ -97,8 +98,10 @@ class _StaffAssistantScreenState extends State<StaffAssistantScreen> with Ticker
 
     try {
       // Call the staff-specific medication lookup API
+      // Use clinic_001 (Klinik Bandar Utama) as default for staff assistant
+      String clinicId = widget.clinic.clinicId == 'Clinic_Staff' ? 'clinic_001' : widget.clinic.clinicId;
       ApiResponse<Map<String, dynamic>> response = await ApiService.sendStaffChatMessage(
-        clinicId: widget.clinic.clinicId,
+        clinicId: clinicId,
         message: text,
         language: _currentLanguage,
       );
@@ -171,7 +174,7 @@ class _StaffAssistantScreenState extends State<StaffAssistantScreen> with Ticker
   String _getErrorMessage(String error) {
     return _currentLanguage == 'BM'
         ? 'Maaf, sistem menghadapi masalah: $error\n\nSila cuba lagi.'
-        : 'Sorry, the system encountered an issue: $error\n\nPlease try again.';
+        : 'Sorry, the system encountered an issue: $error\n\nPlease try again.';
   }
 
   void _scrollToBottom() {
@@ -278,7 +281,7 @@ class _StaffAssistantScreenState extends State<StaffAssistantScreen> with Ticker
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              widget.clinic.name,
+              widget.clinic.clinicId == 'Clinic_Staff' ? 'Klinik Bandar Utama' : widget.clinic.name,
               style: Theme.of(context).appBarTheme.titleTextStyle?.copyWith(
                 fontWeight: FontWeight.w600,
               ),
