@@ -131,8 +131,8 @@ class _LoginScreenState extends State<LoginScreen> {
                   if (email == 'staff@gmail.com') {
                     // Navigate to medication screen for staff
                     final mockClinic = Clinic(
-                      clinicId: 'clinic_staff',
-                      name: 'General Hospital',
+                      clinicId: 'clinic_001',
+                      name: 'Klinik Bandar Utama',
                       address: '123 Main Street',
                       distance: '2.5 km',
                       hours: '8:00 AM - 8:00 PM',

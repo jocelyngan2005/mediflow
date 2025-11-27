@@ -62,10 +62,11 @@ class _StaffAssistantScreenState extends State<StaffAssistantScreen> with Ticker
     });
     
     // Welcome message for staff
+    String clinicDisplayName = widget.clinic.clinicId == 'Clinic_Staff' ? 'Klinik Bandar Utama' : widget.clinic.name;
     _messages.add(ChatMessage(
       text: _currentLanguage == 'BM'
-          ? 'Selamat datang, Kakitangan ${widget.clinic.name}! 👨‍⚕️\n\nSaya Staff AI Assistant anda. Saya boleh membantu dengan:\n• Carian stock ubat & ketersediaan\n• Harga ubat semasa\n• Ubat alternatif yang tersedia\n• Amaran stock rendah\n• Maklumat inventori klinik\n\nContoh: "Panadol stock tinggal berapa?" atau "Do we have Chlorpheniramine?"\n\nApa yang anda ingin semak?'
-          : 'Welcome, ${widget.clinic.name} Staff! 👨‍⚕️\n\nI\'m your Staff AI Assistant. I can help with:\n• Medication stock & availability lookup\n• Current drug pricing\n• Available alternatives\n• Low stock alerts\n• Clinic inventory information\n\nExample: "Panadol stock tinggal berapa?" or "Do we have Chlorpheniramine?"\n\nWhat would you like to check?',
+          ? 'Selamat datang, Kakitangan $clinicDisplayName! 👨‍⚕️\n\nSaya Staff AI Assistant anda. Saya boleh membantu dengan:\n• Carian stock ubat & ketersediaan\n• Harga ubat semasa\n• Ubat alternatif yang tersedia\n• Amaran stock rendah\n• Maklumat inventori klinik\n\nContoh: "Panadol stock tinggal berapa?" atau "Do we have Chlorpheniramine?"\n\nApa yang anda ingin semak?'
+          : 'Welcome, $clinicDisplayName Staff! 👨‍⚕️\n\nI\'m your Staff AI Assistant. I can help with:\n• Medication stock & availability lookup\n• Current drug pricing\n• Available alternatives\n• Low stock alerts\n• Clinic inventory information\n\nExample: "Panadol stock tinggal berapa?" or "Do we have Chlorpheniramine?"\n\nWhat would you like to check?',
       isUser: false,
       timestamp: DateTime.now(),
     ));
@@ -97,8 +98,10 @@ class _StaffAssistantScreenState extends State<StaffAssistantScreen> with Ticker
 
     try {
       // Call the staff-specific medication lookup API
+      // Use clinic_001 (Klinik Bandar Utama) as default for staff assistant
+      String clinicId = widget.clinic.clinicId == 'Clinic_Staff' ? 'clinic_001' : widget.clinic.clinicId;
       ApiResponse<Map<String, dynamic>> response = await ApiService.sendStaffChatMessage(
-        clinicId: widget.clinic.clinicId,
+        clinicId: clinicId,
         message: text,
         language: _currentLanguage,
       );
@@ -168,148 +171,10 @@ class _StaffAssistantScreenState extends State<StaffAssistantScreen> with Ticker
     _scrollToBottom();
   }
 
-  // Mock response generator for frontend prototype
-  StaffChatResponse _generateMockResponse(String userMessage) {
-    final message = userMessage.toLowerCase();
-    final isBM = _currentLanguage == 'BM';
-
-    // Panadol queries
-    if (message.contains('panadol') || message.contains('paracetamol')) {
-      if (message.contains('stock') || message.contains('tinggal') || message.contains('ada')) {
-        return StaffChatResponse(
-          reply: isBM
-              ? 'Panadol 500mg masih ada dalam stok. Berikut maklumat terperinci:'
-              : 'Panadol 500mg is still in stock. Here are the details:',
-          medicationData: MedicationData(
-            medicationName: 'Panadol 500mg',
-            quantity: 45,
-            unit: 'boxes',
-            price: 8.50,
-            isLowStock: false,
-            alternatives: ['Paracetamol 500mg', 'Uphamol 500mg', 'Tylenol 500mg'],
-          ),
-        );
-      }
-      if (message.contains('harga') || message.contains('price')) {
-        return StaffChatResponse(
-          reply: isBM
-              ? 'Harga Panadol 500mg ialah RM 8.50 sekotak.'
-              : 'Panadol 500mg price is RM 8.50 per box.',
-          medicationData: MedicationData(
-            medicationName: 'Panadol 500mg',
-            quantity: 45,
-            unit: 'boxes',
-            price: 8.50,
-            isLowStock: false,
-            alternatives: [],
-          ),
-        );
-      }
-    }
-
-    // Antibiotic queries
-    if (message.contains('antibiotik') || message.contains('antibiotic')) {
-      return StaffChatResponse(
-        reply: isBM
-            ? 'Antibiotik yang tersedia di klinik:'
-            : 'Available antibiotics in the clinic:',
-        medicationData: MedicationData(
-          medicationName: 'Amoxicillin 500mg',
-          quantity: 23,
-          unit: 'boxes',
-          price: 12.00,
-          isLowStock: false,
-          alternatives: ['Amoxicillin 250mg', 'Azithromycin 500mg', 'Ciprofloxacin 500mg'],
-        ),
-      );
-    }
-
-    // Low stock queries
-    if (message.contains('stock rendah') || message.contains('low stock') || 
-        message.contains('tinggal sedikit')) {
-      return StaffChatResponse(
-        reply: isBM
-            ? 'Ubat berikut mempunyai stok rendah dan perlu ditambah:'
-            : 'The following medications have low stock and need to be restocked:',
-        medicationData: MedicationData(
-          medicationName: 'Chlorpheniramine 4mg',
-          quantity: 5,
-          unit: 'boxes',
-          price: 6.50,
-          isLowStock: true,
-          alternatives: ['Cetirizine 10mg', 'Loratadine 10mg'],
-        ),
-      );
-    }
-
-    // Alternative medicine queries
-    if (message.contains('alternatif') || message.contains('alternative') || 
-        message.contains('ganti') || message.contains('replace')) {
-      return StaffChatResponse(
-        reply: isBM
-            ? 'Berikut adalah ubat alternatif yang tersedia:'
-            : 'Here are available alternative medications:',
-        medicationData: MedicationData(
-          medicationName: 'Paracetamol 500mg',
-          quantity: 30,
-          unit: 'boxes',
-          price: 7.00,
-          isLowStock: false,
-          alternatives: ['Panadol 500mg', 'Uphamol 500mg', 'Tylenol 500mg'],
-        ),
-      );
-    }
-
-    // Fever medicine queries
-    if (message.contains('demam') || message.contains('fever')) {
-      return StaffChatResponse(
-        reply: isBM
-            ? 'Ubat demam yang tersedia:'
-            : 'Available fever medications:',
-        medicationData: MedicationData(
-          medicationName: 'Paracetamol 500mg',
-          quantity: 30,
-          unit: 'boxes',
-          price: 7.00,
-          isLowStock: false,
-          alternatives: ['Panadol 500mg', 'Ibuprofen 400mg'],
-        ),
-      );
-    }
-
-    // Quick search queries
-    if (message.contains('cari') || message.contains('search') || 
-        message.contains('carian pantas') || message.contains('quick search')) {
-      return StaffChatResponse(
-        reply: isBM
-            ? 'Sila nyatakan nama ubat yang ingin dicari. Contoh: "Panadol", "Antibiotik", atau "Ubat demam".'
-            : 'Please specify the medication name you want to search. Example: "Panadol", "Antibiotic", or "Fever medicine".',
-      );
-    }
-
-    // Generic medication search
-    if (message.contains('chlorpheniramine') || message.contains('allergy')) {
-      return StaffChatResponse(
-        reply: isBM
-            ? 'Chlorpheniramine 4mg - Stok rendah! Hanya tinggal beberapa kotak.'
-            : 'Chlorpheniramine 4mg - Low stock! Only a few boxes remaining.',
-        medicationData: MedicationData(
-          medicationName: 'Chlorpheniramine 4mg',
-          quantity: 5,
-          unit: 'boxes',
-          price: 6.50,
-          isLowStock: true,
-          alternatives: ['Cetirizine 10mg', 'Loratadine 10mg'],
-        ),
-      );
-    }
-
-    // Default response
-    return StaffChatResponse(
-      reply: isBM
-          ? 'Saya boleh membantu anda dengan:\n• Carian stock ubat\n• Harga ubat\n• Ubat alternatif\n• Amaran stock rendah\n\nCuba tanya: "Panadol stock", "Harga ubat demam", atau "Antibiotik tersedia".'
-          : 'I can help you with:\n• Medication stock search\n• Drug pricing\n• Alternative medications\n• Low stock alerts\n\nTry asking: "Panadol stock", "Fever medicine price", or "Available antibiotics".',
-    );
+  String _getErrorMessage(String error) {
+    return _currentLanguage == 'BM'
+        ? 'Maaf, sistem menghadapi masalah: $error\n\nSila cuba lagi.'
+        : 'Sorry, the system encountered an issue: $error\n\nPlease try again.';
   }
 
   void _scrollToBottom() {
@@ -416,7 +281,7 @@ class _StaffAssistantScreenState extends State<StaffAssistantScreen> with Ticker
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              widget.clinic.name,
+              widget.clinic.clinicId == 'Clinic_Staff' ? 'Klinik Bandar Utama' : widget.clinic.name,
               style: Theme.of(context).appBarTheme.titleTextStyle?.copyWith(
                 fontWeight: FontWeight.w600,
               ),
