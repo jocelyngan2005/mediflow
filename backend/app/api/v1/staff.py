@@ -40,7 +40,6 @@ async def lookup_medication(
         resolved_clinic_name = get_clinic_name_from_id(clinic_id, clinic_name)
         user_input = f"Check stock and availability for {drug_name}"
         lookup_result = await jamai_service.medication_lookup_staff(
-            clinic_id=clinic_id,
             clinic_name=resolved_clinic_name,
             user_input=user_input
         )
@@ -65,7 +64,6 @@ async def lookup_medication_post(request: MedLookupRequest):
         clinic_name = get_clinic_name_from_id(request.clinic_id, request.clinic_name)
         user_input = f"I need information about {request.drug_name} - check stock, price, and any alternatives available"
         lookup_result = await jamai_service.medication_lookup_staff(
-            clinic_id=request.clinic_id,
             clinic_name=clinic_name,
             user_input=user_input
         )
@@ -125,7 +123,6 @@ async def complex_medication_query(clinic_id: str, query: str, clinic_name: str 
     try:
         resolved_clinic_name = get_clinic_name_from_id(clinic_id, clinic_name)
         lookup_result = await jamai_service.medication_lookup_staff(
-            clinic_id=clinic_id,
             clinic_name=resolved_clinic_name,
             user_input=query
         )

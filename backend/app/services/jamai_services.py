@@ -12,7 +12,7 @@ class JamAIService:
             token=settings.JAMAI_API_KEY
         )
 
-    async def appointment_booking(self, clinic_id: str, clinic_name: str, user_input: str, language: str = "BM"):
+    async def appointment_booking(self, clinic_name: str, user_input: str, language: str = "BM"):
         """
         A. Appointment Booking Action Table
         Strict Input: user_input (str), clinic_name (str)
@@ -72,7 +72,7 @@ class JamAIService:
             }
             
         except Exception as e:
-            logger.error(f"Error in appointment_booking for clinic {clinic_id}: {str(e)}")
+            logger.error(f"Error in appointment_booking for clinic {clinic_name}: {str(e)}")
             fallback_message = "Maaf, sistem tempahan menghadapi masalah." if language == "BM" else "Sorry, appointment booking system is experiencing issues."
             return {
                 "available_time_slots": "[]",
@@ -82,7 +82,7 @@ class JamAIService:
                 "booking_record": "{}"
             }
 
-    async def pdf_sop_answering(self, clinic_id: str, clinic_name: str, question: str, language: str = "BM"):
+    async def pdf_sop_answering(self, clinic_name: str, question: str, language: str = "BM"):
         """
         B. SOP QnA Action Table
         Strict Input: question (str), clinic_name (str)
@@ -121,14 +121,14 @@ class JamAIService:
             }
             
         except Exception as e:
-            logger.error(f"Error in pdf_sop_answering for clinic {clinic_id}: {str(e)}")
+            logger.error(f"Error in pdf_sop_answering for clinic {clinic_name}: {str(e)}")
             fallback_message = "Maaf, pencarian dokumen menghadapi masalah." if language == "BM" else "Sorry, document search is experiencing issues."
             return {
                 "response": fallback_message,
                 "source_document": ""
             }
 
-    async def medication_lookup_staff(self, clinic_id: str, clinic_name: str, user_input: str):
+    async def medication_lookup_staff(self, clinic_name: str, user_input: str):
         """
         C. Medical Lookup Action Table (Staff Only)
         Strict Input: user_input (str), clinic_name (str)
@@ -167,7 +167,7 @@ class JamAIService:
             }
             
         except Exception as e:
-            logger.error(f"Error in medication_lookup_staff for clinic {clinic_id}: {str(e)}")
+            logger.error(f"Error in medication_lookup_staff for clinic {clinic_name}: {str(e)}")
             return {
                 "drug_entry": "{}",
                 "medication_message": f"Error checking medication: {str(e)}"

@@ -71,7 +71,6 @@ async def unified_chat(request: ChatRequest):
     try:
         clinic_name = get_clinic_name_from_id(request.clinic_id, request.clinic_name)
         sop_result = await jamai_service.pdf_sop_answering(
-            clinic_id=request.clinic_id,
             clinic_name=clinic_name,
             question=request.message,
             language=request.language
@@ -92,7 +91,6 @@ async def search_pdf_sop(request: ChatRequest):
     try:
         clinic_name = get_clinic_name_from_id(request.clinic_id, request.clinic_name)
         sop_result = await jamai_service.pdf_sop_answering(
-            clinic_id=request.clinic_id,
             clinic_name=clinic_name,
             question=request.message,
             language=request.language
@@ -114,7 +112,6 @@ async def book_appointment(request: ChatRequest):
     try:
         clinic_name = get_clinic_name_from_id(request.clinic_id, request.clinic_name)
         booking_result = await jamai_service.appointment_booking(
-            clinic_id=request.clinic_id,
             clinic_name=clinic_name,
             user_input=request.message,
             language=request.language
@@ -152,7 +149,6 @@ async def trigger_triage(request: TriageRequest):
         
         clinic_name = get_clinic_name_from_id(request.clinic_id, request.clinic_name)
         booking_result = await jamai_service.appointment_booking(
-            clinic_id=request.clinic_id,
             clinic_name=clinic_name,
             user_input=user_query,
             language="BM"
@@ -179,7 +175,6 @@ async def simple_triage(clinic_id: str, symptoms: str, clinic_name: str = None):
     try:
         resolved_clinic_name = get_clinic_name_from_id(clinic_id, clinic_name)
         booking_result = await jamai_service.appointment_booking(
-            clinic_id=clinic_id,
             clinic_name=resolved_clinic_name,
             user_input=f"Symptoms: {symptoms}",
             language="BM"
