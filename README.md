@@ -4,30 +4,17 @@
 
 A BM/English AI nurse assistant that helps small Malaysian clinics handle their overwhelming manual workload—FAQs, appointment triage, medicine availability checks, SOP lookup, and PDF searches—using JamAI Base RAG + Action Tables on a simple mobile-first interface.
 
-## Domain: Embedded LLM 🎯
+## 🎯 Domain: Embedded LLM 
 
 Track: Generative AI for Malaysian Industries with JamAI Base
 
-## Submission 
+## 💻 Submission 
 
 Demo Video: 
 
 Presentation Slides: 
 
-## 🎯 Target Users
-
-### **Patients**
-- Local Malaysian patients seeking convenient healthcare access
-- Foreign workers needing multilingual medical support
-- Walk-in patients requiring appointment booking and clinic information
-- Users wanting to check medication availability and clinic services
-
-### **Clinic Staff**
-- Front-desk staff managing appointments and patient inquiries
-- Medical assistants handling medication inventory
-- Healthcare workers requiring quick access to medical information
-
-## Problem Statement 
+## 📌 Problem Statement 
 
 Malaysia's small clinics face operational challenges:
 
@@ -43,6 +30,20 @@ Malaysia's small clinics face operational challenges:
 - Time-consuming medication inventory tracking
 
 Small clinics can't afford expensive custom solutions, making MediFlow the perfect accessible alternative.
+
+
+## 👥 Target Users
+
+### **Patients**
+- Local Malaysian patients seeking convenient healthcare access
+- Foreign workers needing multilingual medical support
+- Walk-in patients requiring appointment booking and clinic information
+- Users wanting to check medication availability and clinic services
+
+### **Clinic Staff**
+- Front-desk staff managing appointments and patient inquiries
+- Medical assistants handling medication inventory
+- Healthcare workers requiring quick access to medical information
 
 
 ## 🚀 Core Features
@@ -228,6 +229,12 @@ Custom pipelines for complex clinic operations:
 5. **Run the backend server**
    ```bash
    uvicorn app.main:app --reload --host 0.0.0.0 --port 8080
+
+   # If running on Android device 
+   adb reverse tcp:8080 tcp:8080 
+   # Then run the backend server 
+   uvicorn app.main:app --reload --host 0.0.0.0 --port 8080
+   
    ```
 
 ## 🤝 Contributing
